@@ -15,9 +15,27 @@ export default defineConfig({
     },
   },
   test: {
+    exclude: ['e2e/**', '**/node_modules/**'],
     coverage: {
       reporter: ['text'],
+      exclude: [
+        'e2e/**',
+        'src/graphql/**',
+        'src/vite-env.d.ts',
+        '**/node_modules/**',
+        'codegen.ts',
+        'eslint.config.js',
+        'vite.config.ts',
+        'dist/**',
+      ],
+      thresholds: {
+        functions: 90,
+        branches: 90,
+        statements: 90,
+      },
     },
     environment: 'jsdom',
+    setupFiles: ['./vitest-setup.ts'],
+    globals: true,
   },
 });
