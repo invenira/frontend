@@ -34,10 +34,14 @@ const getIAPQuery = graphql(`
 
 export class IapService {
   async getAll(): Promise<Partial<IapgqlSchema>[]> {
-    return graphQLRequest(getIAPsQuery);
+    return graphQLRequest<{ getIAPs: Partial<IapgqlSchema>[] }>(
+      getIAPsQuery,
+    ).then((d) => d.getIAPs);
   }
 
-  async getOne(iapId: string): Promise<IapgqlSchema> {
-    return graphQLRequest(getIAPQuery, { iapId });
+  async getOne(iapId: string): Promise<Partial<IapgqlSchema>> {
+    return graphQLRequest<{ getIAP: Partial<IapgqlSchema> }>(getIAPQuery, {
+      iapId,
+    }).then((d) => d.getIAP);
   }
 }

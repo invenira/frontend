@@ -5,15 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:playwright": "vite --mode playwright",
     "build": "graphql-codegen --config codegen.ts && tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "test:coverage": "vitest run --coverage",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "all": "eslint . && prettier . --check && graphql-codegen --config codegen.ts && tsc -b && vite build && vitest run --coverage && playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -22,10 +25,13 @@
     "@mui/icons-material": "^6.4.4",
     "@mui/material": "^6.4.4",
     "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-router": "^1.102.5",
     "axios": "^1.7.9",
+    "framer-motion": "^12.4.2",
     "graphql": "^16.10.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-oidc-context": "^3.2.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

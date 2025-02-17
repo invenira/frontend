@@ -1,198 +1,104 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import Layout, { LayoutProps } from './Layout';
 import { vi } from 'vitest';
-import Layout from './Layout';
-import { setMatchMedia } from '@/App.spec.tsx';
 
-const TestChild = () => <div>Test Child Content</div>;
+// Mock useRouter so that everything else is imported normally
+const navigateMock = vi.fn();
+vi.mock('@tanstack/react-router', () => {
+  const actual = vi.importActual('@tanstack/react-router');
+  return {
+    ...actual,
+    useRouter: () => ({
+      navigate: navigateMock,
+    }),
+  };
+});
 
-describe('<Layout/>', () => {
+describe('Layout Component', () => {
+  beforeEach(() => {
+    navigateMock.mockReset();
+  });
+
+  const defaultProps: LayoutProps = {
+    darkMode: false,
+    toggleDarkMode: vi.fn(),
+    children: <div data-testid="child">Child Content</div>,
+  };
+
   test('renders children content', () => {
-    // Simulate desktop for simplicity.
-    setMatchMedia(true);
-    const toggleDarkMode = vi.fn();
-
-    render(
-      <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-        <TestChild />
-      </Layout>,
-    );
-
-    expect(screen.getByText('Test Child Content')).toBeInTheDocument();
+    render(<Layout {...defaultProps} />);
+    expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  describe('Desktop layout', () => {
-    beforeEach(() => {
-      setMatchMedia(true); // desktop: matches "(min-width:600px)"
-    });
-
-    test('renders permanent drawer with title and navigation links', () => {
-      const toggleDarkMode = vi.fn();
-
-      render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      expect(screen.getByText('Inven!RA')).toBeInTheDocument();
-      expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('IAPs')).toBeInTheDocument();
-    });
-
-    test('does not render mobile AppBar', () => {
-      const toggleDarkMode = vi.fn();
-
-      render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      // In desktop mode the mobile-specific AppBar is not rendered.
-      // (Because the AppBar is rendered only when !isDesktop.)
-      // We can check that there is no element with the id "logo" (used in the mobile AppBar).
-      expect(screen.queryByText('Inven!RA', { selector: '#logo' })).toBeNull();
-    });
-
-    test('dark mode toggle in drawer calls toggleDarkMode', () => {
-      const toggleDarkMode = vi.fn();
-
-      render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      // In the bottom section of the drawer, the text "TestUser" is rendered
-      // alongside the dark mode toggle IconButton.
-      const testUser = screen.getByText('TestUser');
-      // Locate the parent container so we can find the sibling button.
-      const parent = testUser.parentElement;
-      expect(parent).toBeDefined();
-
-      // Get the first button inside that container.
-      const darkModeButton = parent?.querySelector('button');
-      expect(darkModeButton).toBeInTheDocument();
-
-      if (darkModeButton) {
-        fireEvent.click(darkModeButton);
-        expect(toggleDarkMode).toHaveBeenCalledTimes(1);
-      }
-    });
-
-    test('renders Log Off button', () => {
-      const toggleDarkMode = vi.fn();
-
-      render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      const logOffButton = screen.getByRole('button', { name: /log off/i });
-      expect(logOffButton).toBeInTheDocument();
-    });
+  test('clicking "Home" calls router.navigate with { to: "/" }', () => {
+    render(<Layout {...defaultProps} />);
+    const menuButton = screen.getAllByRole('button')[0];
+    fireEvent.click(menuButton);
+    const homeLink = screen.getByText('Home');
+    fireEvent.click(homeLink);
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/' });
   });
 
-  describe('Mobile layout', () => {
-    beforeEach(() => {
-      setMatchMedia(false); // mobile: does NOT match "(min-width:600px)"
-    });
+  test('clicking "IAPs" calls router.navigate with { to: "/iaps" }', () => {
+    render(<Layout {...defaultProps} />);
+    const menuButton = screen.getAllByRole('button')[0];
+    fireEvent.click(menuButton);
+    const iapsLink = screen.getByText('IAPs');
+    fireEvent.click(iapsLink);
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/iaps' });
+  });
 
-    test('renders AppBar with hamburger menu', () => {
-      const toggleDarkMode = vi.fn();
-      const { container } = render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
+  test('clicking "Log Off" button calls router.navigate with { to: "/logout" }', () => {
+    render(<Layout {...defaultProps} />);
+    const menuButton = screen.getAllByRole('button')[0];
+    fireEvent.click(menuButton);
+    const logOffButton = screen.getByText('Log Off');
+    fireEvent.click(logOffButton);
+    expect(navigateMock).toHaveBeenCalledWith({ to: '/logout' });
+  });
 
-      // In mobile mode, the AppBar is rendered.
-      // The mobile AppBar renders a Typography with id="logo".
-      const logo = container.querySelector('#logo');
-      expect(logo).toBeInTheDocument();
-      expect(logo).toHaveTextContent('Inven!RA');
+  test('dark mode toggle button calls toggleDarkMode prop', () => {
+    const toggleMock = vi.fn();
+    render(<Layout {...defaultProps} toggleDarkMode={toggleMock} />);
+    const menuButton = screen.getAllByRole('button')[0];
+    fireEvent.click(menuButton);
+    // The dark mode toggle button is rendered next to the text "TestUser"
+    const testUserText = screen.getByText('TestUser');
+    // Assuming the button is a child of the same parent as "TestUser"
+    const toggleButton = testUserText.parentElement?.querySelector('button');
+    expect(toggleButton).toBeInTheDocument();
+    if (toggleButton) {
+      fireEvent.click(toggleButton);
+      expect(toggleMock).toHaveBeenCalled();
+    }
+  });
 
-      // The hamburger menu IconButton is rendered in the AppBar.
-      const buttons = container.querySelectorAll('button');
-      expect(buttons.length).toBeGreaterThan(0);
-      const hamburgerButton = buttons[0];
-      expect(hamburgerButton).toBeInTheDocument();
-    });
+  test('renders AppBar with hamburger menu', () => {
+    render(<Layout {...defaultProps} />);
+    // In mobile mode, an AppBar is rendered containing a Typography with id "logo"
+    // (Note: In our component, the AppBar does not have a test id, so we locate by its content.)
+    const logo = screen.getByText('Inven!RA');
+    expect(logo).toBeInTheDocument();
+    // Also, the hamburger menu IconButton is rendered (assumed to be the first button)
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThan(0);
+  });
 
-    test('opens temporary drawer on hamburger menu click', () => {
-      const toggleDarkMode = vi.fn();
-      const { container } = render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
+  test('hamburger menu toggles temporary drawer', () => {
+    render(<Layout {...defaultProps} />);
+    // In mobile mode, the Drawer is rendered with keepMounted,
+    // so its content is present in the DOM but hidden.
+    const homeElement = screen.getByText('Home');
+    // Check that the element is in the document but not visible.
+    expect(homeElement).not.toBeVisible();
 
-      const hamburgerButton = container.querySelector('button');
-      expect(hamburgerButton).toBeInTheDocument();
-      fireEvent.click(hamburgerButton!);
+    // Click the hamburger menu (assumed to be the first IconButton rendered)
+    const menuButton = screen.getAllByRole('button')[0];
+    fireEvent.click(menuButton);
 
-      // After clicking, the temporary Drawer should open.
-      // We expect to see the navigation links.
-      expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('IAPs')).toBeInTheDocument();
-    });
-
-    test('dark mode toggle in mobile drawer calls toggleDarkMode', () => {
-      const toggleDarkMode = vi.fn();
-      const { container } = render(
-        <Layout darkMode={true} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      const hamburgerButton = container.querySelector('button');
-      expect(hamburgerButton).toBeInTheDocument();
-      fireEvent.click(hamburgerButton!);
-
-      const testUser = screen.getByText('TestUser');
-      const parent = testUser.parentElement;
-      expect(parent).toBeDefined();
-
-      const darkModeButton = parent?.querySelector('button');
-      expect(darkModeButton).toBeInTheDocument();
-
-      if (darkModeButton) {
-        fireEvent.click(darkModeButton);
-        expect(toggleDarkMode).toHaveBeenCalledTimes(1);
-      }
-    });
-
-    test('renders Log Off button in drawer', () => {
-      const toggleDarkMode = vi.fn();
-      const { container } = render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      // Open the drawer.
-      const hamburgerButton = container.querySelector('button');
-      expect(hamburgerButton).toBeInTheDocument();
-      fireEvent.click(hamburgerButton!);
-
-      const logOffButton = screen.getByRole('button', { name: /log off/i });
-      expect(logOffButton).toBeInTheDocument();
-    });
-
-    test('main content has top margin offset for mobile', () => {
-      const toggleDarkMode = vi.fn();
-      const { container } = render(
-        <Layout darkMode={false} toggleDarkMode={toggleDarkMode}>
-          <TestChild />
-        </Layout>,
-      );
-
-      // The main content is rendered in a <main> element.
-      const mainContent = container.querySelector('main');
-      expect(mainContent).toBeInTheDocument();
-      // In mobile mode, the component applies mt: 7 which equals 7 * 8 = 56px.
-      expect(mainContent).toHaveStyle('margin-top: 56px');
-    });
+    // After clicking, the drawer should be open, so the navigation items become visible.
+    expect(screen.getByText('Home')).toBeVisible();
+    expect(screen.getByText('IAPs')).toBeVisible();
+    expect(screen.getByText('Log Off')).toBeVisible();
   });
 });

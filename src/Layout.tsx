@@ -12,13 +12,13 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import HomeIcon from '@mui/icons-material/Home';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import { useRouter } from '@tanstack/react-router';
 
 export interface LayoutProps {
   children: ReactNode;
@@ -26,18 +26,25 @@ export interface LayoutProps {
   toggleDarkMode: () => void;
 }
 
-export default function Layout({
-  children,
-  darkMode,
-  toggleDarkMode,
-}: LayoutProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const isDesktop = useMediaQuery('(min-width:600px)');
+export default function Layout(props: LayoutProps) {
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const router = useRouter();
   const drawerWidth = 240;
 
-  const handleDrawerToggle = () => {
-    setMobileOpen((prevState) => !prevState);
+  const home = () => {
+    setOpenDrawer(false);
+    router.navigate({ to: '/' });
   };
+  const iaps = () => {
+    setOpenDrawer(false);
+    router.navigate({ to: '/iaps' });
+  };
+
+  const handleDrawerToggle = () => {
+    setOpenDrawer((prevState) => !prevState);
+  };
+
+  const logout = () => router.navigate({ to: '/logout' });
 
   const drawerContent = (
     <Box
@@ -50,46 +57,25 @@ export default function Layout({
     >
       {/* Top Section: Navigation Links */}
       <Box>
-        {isDesktop ? (
-          <Typography
-            variant="h4"
-            component="h4"
-            textAlign="center"
-            sx={{ mt: 3 }}
-          >
-            Inven!RA
-          </Typography>
-        ) : (
-          ''
-        )}
-        <Box
-          sx={{
-            p: 2,
-            mt: 3,
-            borderTop: 2,
-            borderColor: 'divider',
-          }}
-        >
-          <Toolbar />
-          <List>
-            <ListItem disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <HomeIcon />
-                </ListItemIcon>
-                <ListItemText primary="Home" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  <AssignmentIcon />
-                </ListItemIcon>
-                <ListItemText primary="IAPs" />
-              </ListItemButton>
-            </ListItem>
-          </List>
-        </Box>
+        <Toolbar />
+        <List>
+          <ListItem disablePadding>
+            <ListItemButton onClick={home}>
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <ListItemText primary="Home" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={iaps}>
+              <ListItemIcon>
+                <AssignmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="IAPs" />
+            </ListItemButton>
+          </ListItem>
+        </List>
       </Box>
 
       {/* Bottom Section: User Info and Sign Off */}
@@ -109,11 +95,11 @@ export default function Layout({
           <Typography variant="body1" gutterBottom>
             TestUser
           </Typography>
-          <IconButton onClick={toggleDarkMode} color="inherit">
-            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+          <IconButton onClick={props.toggleDarkMode} color="inherit">
+            {props.darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
         </Box>
-        <Button variant="outlined" fullWidth>
+        <Button variant="outlined" fullWidth onClick={logout}>
           Log Off
         </Button>
       </Box>
@@ -122,64 +108,48 @@ export default function Layout({
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* On mobile: display an AppBar with a hamburger menu */}
-      {!isDesktop && (
-        <AppBar
-          position="fixed"
-          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        >
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div" id={'logo'}>
-              Inven!RA
-            </Typography>
-          </Toolbar>
-        </AppBar>
-      )}
+      <AppBar
+        position="fixed"
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            id={'logo'}
+            onClick={home}
+            sx={{ cursor: 'pointer' }}
+          >
+            Inven!RA
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
-      {/* Drawer: Permanent on desktop, temporary on mobile */}
-      {isDesktop ? (
-        <Drawer
-          variant="permanent"
-          open
-          sx={{
+      <Drawer
+        variant="temporary"
+        open={openDrawer}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
             width: drawerWidth,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-              boxShadow: '5',
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      ) : (
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'block', md: 'none' },
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      )}
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
 
       {/* Main content area */}
       <Box
@@ -187,11 +157,19 @@ export default function Layout({
         sx={{
           flexGrow: 1,
           p: 3,
-          // On mobile, add top margin to offset the AppBar
-          mt: !isDesktop ? 7 : 0,
+          mt: 7, // Offset for the mobile AppBar
+          mb: 4,
+          ml: 4,
+          mr: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: 0,
         }}
       >
-        {children}
+        {props.children}
       </Box>
     </Box>
   );
