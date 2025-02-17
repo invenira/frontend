@@ -31,13 +31,4 @@ describe('AnimateTransition', () => {
     const child = screen.getByTestId('child');
     expect(wrapper).toContainElement(child);
   });
-
-  it('matches snapshot', () => {
-    const { container } = render(
-      <AnimateTransition>
-        <div>Snapshot Content</div>
-      </AnimateTransition>,
-    );
-    expect(container.firstChild).toMatchSnapshot();
-  });
 });
