@@ -21,7 +21,7 @@ export async function graphQLRequest<O>(query: any, variables = {}) {
   const queryString = typeof query === 'string' ? query : query.value;
 
   const response = await axios.post<{ data: O; errors: Error[] }>(
-    '/',
+    '',
     {
       query: queryString,
       variables,

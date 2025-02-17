@@ -39,9 +39,9 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
-    port: 4000,
+    command: 'npm run dev:playwright',
+    port: 8080,
     timeout: 240000,
-    reuseExistingServer: !process.env.CI, //
+    reuseExistingServer: !process.env.CI,
   },
 });

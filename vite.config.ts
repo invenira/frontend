@@ -7,7 +7,7 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 4000,
+    port: 8080,
   },
   resolve: {
     alias: {
@@ -27,6 +27,10 @@ export default defineConfig({
         'eslint.config.js',
         'vite.config.ts',
         'dist/**',
+        'src/main.tsx',
+        'src/constants.ts',
+        'src/**/index.ts',
+        'src/TestAuthProvider.tsx',
       ],
       thresholds: {
         functions: 90,
