@@ -1,12 +1,12 @@
-import { Navigate } from '@tanstack/react-router';
 import { useAuth } from 'react-oidc-context';
 import { CircularProgress } from '@mui/material';
+import { CustomNavigate } from '@/utils';
 
 export const LoginCallback = () => {
   const auth = useAuth();
 
   if (auth.isAuthenticated) {
-    return <Navigate to="/" />;
+    return <CustomNavigate />;
   }
 
   if (auth.error) {

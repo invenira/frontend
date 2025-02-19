@@ -9,9 +9,10 @@ import {
 } from '@mui/material';
 import { useRouter } from '@tanstack/react-router';
 import Grid from '@mui/material/Grid2';
+import { userCustomRouter } from '@/utils';
 
 export const IAPsList = () => {
-  const router = useRouter();
+  const router = userCustomRouter(useRouter());
 
   const {
     data: iaps,

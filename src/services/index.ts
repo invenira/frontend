@@ -1,1 +1,1 @@
-export * from './iap.service';
+export * from './graphql.service.ts';

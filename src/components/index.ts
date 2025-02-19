@@ -6,3 +6,5 @@ export * from './LoginRedirect';
 export * from './LoginCallback';
 export * from './LogoutRedirect.tsx';
 export * from './LogoutCallback.tsx';
+export * from './CreateIAP.tsx';
+export * from './CustomIFrame.tsx';

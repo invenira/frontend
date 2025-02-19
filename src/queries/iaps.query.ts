@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { IapService } from '@/services';
 import { z } from 'zod';
+import { graphQLService } from '@/services';
 
-const iapService = new IapService();
+export const IAPS_QUERY = 'iaps';
 
 export const useIAPsQuery = () => {
   return useQuery({
-    queryKey: ['iaps'],
-    queryFn: async () => iapService.getAll(),
+    queryKey: [IAPS_QUERY],
+    queryFn: async () => graphQLService.getAll(),
   });
 };
 
@@ -21,6 +21,6 @@ export const useIAPQuery = (id: string) => {
 
   return useQuery({
     queryKey: [`iap-${id}`, id],
-    queryFn: async () => iapService.getOne(id),
+    queryFn: async () => graphQLService.getOne(id),
   });
 };
