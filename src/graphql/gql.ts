@@ -15,22 +15,52 @@ import * as types from './graphql';
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.GetIaPsDocument,
+    "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      activityProviders {\n        _id\n        name\n        description\n        url\n        activities {\n          _id\n          name\n        }\n      }\n      isDeployed\n      #deployUrls\n      goals {\n        _id\n        name\n      }\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.GetIaPsDocument,
     "\n  query getIAP($iapId: MongoIdScalar!) {\n    getIAP(iapId: $iapId) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.GetIapDocument,
+    "\n  query getActivityProviders {\n    getActivityProviders {\n      _id\n      name\n      description\n      url\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.GetActivityProvidersDocument,
+    "\n  mutation createIap($createIapInput: CreateIAPInput!) {\n    createIap(createIapInput: $createIapInput) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.CreateIapDocument,
+    "\n  mutation createActivityProvider(\n    $iapId: MongoIdScalar!\n    $createActivityProviderInput: CreateActivityProviderInput!\n  ) {\n    createActivityProvider(\n      iapId: $iapId\n      createActivityProviderInput: $createActivityProviderInput\n    ) {\n      _id\n      activities {\n        updatedAt\n        parameters\n        name\n      }\n      createdAt\n      createdBy\n      description\n      name\n      updatedAt\n      updatedBy\n      url\n    }\n  }\n": typeof types.CreateActivityProviderDocument,
+    "\n  mutation createActivity(\n    $apId: MongoIdScalar!\n    $createActivityInput: CreateActivityInput!\n  ) {\n    createActivity(apId: $apId, createActivityInput: $createActivityInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      name\n      parameters\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.CreateActivityDocument,
+    "\n  mutation createGoal(\n    $iapId: MongoIdScalar!\n    $createGoalInput: CreateGoalInput!\n  ) {\n    createGoal(iapId: $iapId, createGoalInput: $createGoalInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      formula\n      name\n      targetValue\n      updatedAt\n      updatedBy\n    }\n  }\n": typeof types.CreateGoalDocument,
 };
 const documents: Documents = {
-    "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": types.GetIaPsDocument,
+    "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      activityProviders {\n        _id\n        name\n        description\n        url\n        activities {\n          _id\n          name\n        }\n      }\n      isDeployed\n      #deployUrls\n      goals {\n        _id\n        name\n      }\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": types.GetIaPsDocument,
     "\n  query getIAP($iapId: MongoIdScalar!) {\n    getIAP(iapId: $iapId) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": types.GetIapDocument,
+    "\n  query getActivityProviders {\n    getActivityProviders {\n      _id\n      name\n      description\n      url\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": types.GetActivityProvidersDocument,
+    "\n  mutation createIap($createIapInput: CreateIAPInput!) {\n    createIap(createIapInput: $createIapInput) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n": types.CreateIapDocument,
+    "\n  mutation createActivityProvider(\n    $iapId: MongoIdScalar!\n    $createActivityProviderInput: CreateActivityProviderInput!\n  ) {\n    createActivityProvider(\n      iapId: $iapId\n      createActivityProviderInput: $createActivityProviderInput\n    ) {\n      _id\n      activities {\n        updatedAt\n        parameters\n        name\n      }\n      createdAt\n      createdBy\n      description\n      name\n      updatedAt\n      updatedBy\n      url\n    }\n  }\n": types.CreateActivityProviderDocument,
+    "\n  mutation createActivity(\n    $apId: MongoIdScalar!\n    $createActivityInput: CreateActivityInput!\n  ) {\n    createActivity(apId: $apId, createActivityInput: $createActivityInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      name\n      parameters\n      updatedAt\n      updatedBy\n    }\n  }\n": types.CreateActivityDocument,
+    "\n  mutation createGoal(\n    $iapId: MongoIdScalar!\n    $createGoalInput: CreateGoalInput!\n  ) {\n    createGoal(iapId: $iapId, createGoalInput: $createGoalInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      formula\n      name\n      targetValue\n      updatedAt\n      updatedBy\n    }\n  }\n": types.CreateGoalDocument,
 };
 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').GetIaPsDocument;
+export function graphql(source: "\n  query getIAPs {\n    getIAPs {\n      _id\n      name\n      description\n      activityProviders {\n        _id\n        name\n        description\n        url\n        activities {\n          _id\n          name\n        }\n      }\n      isDeployed\n      #deployUrls\n      goals {\n        _id\n        name\n      }\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').GetIaPsDocument;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query getIAP($iapId: MongoIdScalar!) {\n    getIAP(iapId: $iapId) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').GetIapDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query getActivityProviders {\n    getActivityProviders {\n      _id\n      name\n      description\n      url\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').GetActivityProvidersDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation createIap($createIapInput: CreateIAPInput!) {\n    createIap(createIapInput: $createIapInput) {\n      _id\n      name\n      description\n      isDeployed\n      createdAt\n      createdBy\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').CreateIapDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation createActivityProvider(\n    $iapId: MongoIdScalar!\n    $createActivityProviderInput: CreateActivityProviderInput!\n  ) {\n    createActivityProvider(\n      iapId: $iapId\n      createActivityProviderInput: $createActivityProviderInput\n    ) {\n      _id\n      activities {\n        updatedAt\n        parameters\n        name\n      }\n      createdAt\n      createdBy\n      description\n      name\n      updatedAt\n      updatedBy\n      url\n    }\n  }\n"): typeof import('./graphql').CreateActivityProviderDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation createActivity(\n    $apId: MongoIdScalar!\n    $createActivityInput: CreateActivityInput!\n  ) {\n    createActivity(apId: $apId, createActivityInput: $createActivityInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      name\n      parameters\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').CreateActivityDocument;
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation createGoal(\n    $iapId: MongoIdScalar!\n    $createGoalInput: CreateGoalInput!\n  ) {\n    createGoal(iapId: $iapId, createGoalInput: $createGoalInput) {\n      _id\n      createdAt\n      createdBy\n      description\n      formula\n      name\n      targetValue\n      updatedAt\n      updatedBy\n    }\n  }\n"): typeof import('./graphql').CreateGoalDocument;
 
 
 export function graphql(source: string) {

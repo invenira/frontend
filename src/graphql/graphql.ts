@@ -313,7 +313,7 @@ export type QueryGetIapArgs = {
 export type GetIaPsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetIaPsQuery = { __typename?: 'Query', getIAPs: Array<{ __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string }> };
+export type GetIaPsQuery = { __typename?: 'Query', getIAPs: Array<{ __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string, activityProviders: Array<{ __typename?: 'ActivityProviderGQLSchema', _id: any, name: string, description: string, url: string, activities: Array<{ __typename?: 'ActivityGQLSchema', _id: any, name: string }> }>, goals: Array<{ __typename?: 'GoalGQLSchema', _id: any, name: string }> }> };
 
 export type GetIapQueryVariables = Exact<{
   iapId: Scalars['MongoIdScalar']['input'];
@@ -321,6 +321,42 @@ export type GetIapQueryVariables = Exact<{
 
 
 export type GetIapQuery = { __typename?: 'Query', getIAP: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string } };
+
+export type GetActivityProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetActivityProvidersQuery = { __typename?: 'Query', getActivityProviders: Array<{ __typename?: 'ActivityProviderGQLSchema', _id: any, name: string, description: string, url: string, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string }> };
+
+export type CreateIapMutationVariables = Exact<{
+  createIapInput: CreateIapInput;
+}>;
+
+
+export type CreateIapMutation = { __typename?: 'Mutation', createIap: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string } };
+
+export type CreateActivityProviderMutationVariables = Exact<{
+  iapId: Scalars['MongoIdScalar']['input'];
+  createActivityProviderInput: CreateActivityProviderInput;
+}>;
+
+
+export type CreateActivityProviderMutation = { __typename?: 'Mutation', createActivityProvider: { __typename?: 'ActivityProviderGQLSchema', _id: any, createdAt: any, createdBy: string, description: string, name: string, updatedAt: any, updatedBy: string, url: string, activities: Array<{ __typename?: 'ActivityGQLSchema', updatedAt: any, parameters: any, name: string }> } };
+
+export type CreateActivityMutationVariables = Exact<{
+  apId: Scalars['MongoIdScalar']['input'];
+  createActivityInput: CreateActivityInput;
+}>;
+
+
+export type CreateActivityMutation = { __typename?: 'Mutation', createActivity: { __typename?: 'ActivityGQLSchema', _id: any, createdAt: any, createdBy: string, description: string, name: string, parameters: any, updatedAt: any, updatedBy: string } };
+
+export type CreateGoalMutationVariables = Exact<{
+  iapId: Scalars['MongoIdScalar']['input'];
+  createGoalInput: CreateGoalInput;
+}>;
+
+
+export type CreateGoalMutation = { __typename?: 'Mutation', createGoal: { __typename?: 'GoalGQLSchema', _id: any, createdAt: any, createdBy: string, description: string, formula: string, name: string, targetValue: number, updatedAt: any, updatedBy: string } };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -343,7 +379,21 @@ export const GetIaPsDocument = new TypedDocumentString(`
     _id
     name
     description
+    activityProviders {
+      _id
+      name
+      description
+      url
+      activities {
+        _id
+        name
+      }
+    }
     isDeployed
+    goals {
+      _id
+      name
+    }
     createdAt
     createdBy
     updatedAt
@@ -365,3 +415,82 @@ export const GetIapDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<GetIapQuery, GetIapQueryVariables>;
+export const GetActivityProvidersDocument = new TypedDocumentString(`
+    query getActivityProviders {
+  getActivityProviders {
+    _id
+    name
+    description
+    url
+    createdAt
+    createdBy
+    updatedAt
+    updatedBy
+  }
+}
+    `) as unknown as TypedDocumentString<GetActivityProvidersQuery, GetActivityProvidersQueryVariables>;
+export const CreateIapDocument = new TypedDocumentString(`
+    mutation createIap($createIapInput: CreateIAPInput!) {
+  createIap(createIapInput: $createIapInput) {
+    _id
+    name
+    description
+    isDeployed
+    createdAt
+    createdBy
+    updatedAt
+    updatedBy
+  }
+}
+    `) as unknown as TypedDocumentString<CreateIapMutation, CreateIapMutationVariables>;
+export const CreateActivityProviderDocument = new TypedDocumentString(`
+    mutation createActivityProvider($iapId: MongoIdScalar!, $createActivityProviderInput: CreateActivityProviderInput!) {
+  createActivityProvider(
+    iapId: $iapId
+    createActivityProviderInput: $createActivityProviderInput
+  ) {
+    _id
+    activities {
+      updatedAt
+      parameters
+      name
+    }
+    createdAt
+    createdBy
+    description
+    name
+    updatedAt
+    updatedBy
+    url
+  }
+}
+    `) as unknown as TypedDocumentString<CreateActivityProviderMutation, CreateActivityProviderMutationVariables>;
+export const CreateActivityDocument = new TypedDocumentString(`
+    mutation createActivity($apId: MongoIdScalar!, $createActivityInput: CreateActivityInput!) {
+  createActivity(apId: $apId, createActivityInput: $createActivityInput) {
+    _id
+    createdAt
+    createdBy
+    description
+    name
+    parameters
+    updatedAt
+    updatedBy
+  }
+}
+    `) as unknown as TypedDocumentString<CreateActivityMutation, CreateActivityMutationVariables>;
+export const CreateGoalDocument = new TypedDocumentString(`
+    mutation createGoal($iapId: MongoIdScalar!, $createGoalInput: CreateGoalInput!) {
+  createGoal(iapId: $iapId, createGoalInput: $createGoalInput) {
+    _id
+    createdAt
+    createdBy
+    description
+    formula
+    name
+    targetValue
+    updatedAt
+    updatedBy
+  }
+}
+    `) as unknown as TypedDocumentString<CreateGoalMutation, CreateGoalMutationVariables>;
