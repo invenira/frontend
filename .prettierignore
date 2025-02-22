@@ -6,3 +6,4 @@ src/graphql
 schema.graphql
 .github
 nginx
+.releaserc.json
