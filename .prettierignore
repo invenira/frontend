@@ -4,3 +4,6 @@ coverage
 node_modules
 src/graphql
 schema.graphql
+.github
+nginx
+.releaserc.json
