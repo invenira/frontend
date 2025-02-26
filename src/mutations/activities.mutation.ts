@@ -4,7 +4,7 @@ import { ActivityGqlSchema, CreateActivityInput } from '@/graphql/graphql.ts';
 import { ACTIVITIES_QUERY } from '@/queries';
 
 export type CreateActivityMutationProps = {
-  apId: string;
+  iapId: string;
   createActivityInput: CreateActivityInput;
 };
 
@@ -16,7 +16,7 @@ export const useCreateActivityMutation = (
 
   return useMutation({
     mutationFn: async (props: CreateActivityMutationProps) =>
-      graphQLService.createActivity(props.apId, props.createActivityInput),
+      graphQLService.createActivity(props.iapId, props.createActivityInput),
 
     onSuccess: (activity) => {
       if (onSuccess) {

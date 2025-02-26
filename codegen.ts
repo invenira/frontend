@@ -2,7 +2,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   schema:
-    'https://raw.githubusercontent.com/invenira/schemas/refs/tags/v0.0.2/src/invenira_backend_schema.graphql',
+    'https://raw.githubusercontent.com/invenira/schemas/refs/tags/v1.1.0/src/invenira_backend_schema.graphql',
   documents: ['src/**/*.ts'],
   ignoreNoDocuments: true,
   generates: {

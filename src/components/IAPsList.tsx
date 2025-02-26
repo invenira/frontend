@@ -29,33 +29,34 @@ export const IAPsList = () => {
   }
 
   return (
-    <Grid
-      container
-      spacing={{ xs: 2, sm: 3, md: 4, lg: 5, xl: 6 }}
-      columns={{ xs: 4, sm: 8, md: 12, lg: 16, xl: 20 }}
-    >
+    <Grid container spacing={2} justifyContent="center">
       {iaps?.map((iap) => (
-        <Grid key={`Grid${iap?._id}`} size={{ xs: 2, sm: 4, md: 4 }}>
-          <Card
-            key={`Card_${iap?._id}`}
-            sx={{
-              width: '100%',
-              aspectRatio: '1 / 1',
-              maxWidth: 200,
-              minHeight: 200,
-            }}
-          >
+        <Grid
+          key={`Grid${iap?._id}`}
+          spacing={{ xs: 2, sm: 3, md: 4, lg: 5, xl: 6 }}
+          columns={{ xs: 4, sm: 6, md: 8, lg: 10, xl: 12 }}
+          style={{ display: 'flex', justifyContent: 'center' }}
+        >
+          <Card key={`Card_${iap?._id}`} sx={{ width: 200, height: 200 }}>
             <CardContent key={`CardContent_${iap?._id}`}>
               <Typography
                 key={`Typography_title_${iap?._id}`}
                 variant="h5"
                 component="div"
+                noWrap
               >
                 {iap?.name}
               </Typography>
               <Typography
                 key={`Typography_description_${iap?._id}`}
                 variant="body2"
+                sx={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: 'vertical',
+                }}
               >
                 {iap?.description}
               </Typography>

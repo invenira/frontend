@@ -87,11 +87,9 @@ const createIAPMutation = graphql(`
 
 const createActivityProviderMutation = graphql(`
   mutation createActivityProvider(
-    $iapId: MongoIdScalar!
     $createActivityProviderInput: CreateActivityProviderInput!
   ) {
     createActivityProvider(
-      iapId: $iapId
       createActivityProviderInput: $createActivityProviderInput
     ) {
       _id
@@ -113,10 +111,10 @@ const createActivityProviderMutation = graphql(`
 
 const createActivityMutation = graphql(`
   mutation createActivity(
-    $apId: MongoIdScalar!
+    $iapId: MongoIdScalar!
     $createActivityInput: CreateActivityInput!
   ) {
-    createActivity(apId: $apId, createActivityInput: $createActivityInput) {
+    createActivity(iapId: $iapId, createActivityInput: $createActivityInput) {
       _id
       createdAt
       createdBy
@@ -145,6 +143,20 @@ const createGoalMutation = graphql(`
       updatedAt
       updatedBy
     }
+  }
+`);
+
+const getConfigurationInterfaceUrlQuery = graphql(`
+  query getConfigurationInterfaceUrl($apId: MongoIdScalar!) {
+    getConfigurationInterfaceUrl(apId: $apId) {
+      url
+    }
+  }
+`);
+
+const getActivityProviderRequiredFieldsQuery = graphql(`
+  query getActivityProviderRequiredFields($apId: MongoIdScalar!) {
+    getActivityProviderRequiredFields(apId: $apId)
   }
 `);
 
@@ -187,25 +199,23 @@ export class GraphQLService {
   }
 
   async createActivityProvider(
-    iapId: string,
     createActivityProviderInput: CreateActivityProviderInput,
   ): Promise<Partial<ActivityProviderGqlSchema>> {
     return graphQLRequest<{
       createActivityProvider: Partial<ActivityProviderGqlSchema>;
     }>(createActivityProviderMutation, {
-      iapId,
       createActivityProviderInput,
     }).then((d) => d.createActivityProvider);
   }
 
   async createActivity(
-    apId: string,
+    iapId: string,
     createActivityInput: CreateActivityInput,
   ): Promise<Partial<ActivityGqlSchema>> {
     return graphQLRequest<{ createActivity: Partial<ActivityGqlSchema> }>(
       createActivityMutation,
       {
-        apId,
+        iapId,
         createActivityInput,
       },
     ).then((d) => d.createActivity);
@@ -222,6 +232,22 @@ export class GraphQLService {
         createGoalInput,
       },
     ).then((d) => d.createGoal);
+  }
+
+  async getConfigurationInterfaceUrl(apId: string): Promise<string> {
+    return graphQLRequest<{
+      getConfigurationInterfaceUrl: { url: string };
+    }>(getConfigurationInterfaceUrlQuery, {
+      apId,
+    }).then((d) => d.getConfigurationInterfaceUrl.url);
+  }
+
+  async getActivityProviderRequiredFields(apId: string): Promise<string[]> {
+    return graphQLRequest<{
+      getActivityProviderRequiredFields: string[];
+    }>(getActivityProviderRequiredFieldsQuery, {
+      apId,
+    }).then((d) => d.getActivityProviderRequiredFields);
   }
 }
 

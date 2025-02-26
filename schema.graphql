@@ -27,7 +27,7 @@ type ActivityGQLSchema {
 type ActivityProviderGQLSchema {
   """The internal unique Activity Provider ID."""
   _id: MongoIdScalar!
-  """The list of Activities created for this Activity Provider."""
+  """The list of activities provided by this Activity Provider"""
   activities: [ActivityGQLSchema!]!
   """The timestamp when the Activity Provider was created."""
   createdAt: Date!
@@ -59,6 +59,8 @@ type ConfigInterfaceGQLSchema {
 
 """The request payload to create a new Activity."""
 input CreateActivityInput {
+  """The Activity Provider id that provides this Activity"""
+  activityProviderId: MongoIdScalar!
   """The Activity Description."""
   description: String!
   """The unique Activity Name."""
@@ -141,7 +143,7 @@ type IAPGQLSchema {
   deployUrls: Record!
   """The IAP Description."""
   description: String!
-  """The list of Goals included in the IAP"""
+  """The list of Goal included in the IAP"""
   goals: [GoalGQLSchema!]!
   """
   Weather this IAP is deployed or not. Being deployed means that the system has engaged with all Activity Providers to
@@ -175,12 +177,10 @@ scalar MetricType
 scalar MongoIdScalar
 
 type Mutation {
-  """
-  Create a new Activity using the given Activity Provider within an Inventive Activity Plan
-  """
-  createActivity(apId: MongoIdScalar!, createActivityInput: CreateActivityInput!): ActivityGQLSchema!
+  """Create a new Activity within an Inventive Activity Plan"""
+  createActivity(createActivityInput: CreateActivityInput!, iapId: MongoIdScalar!): ActivityGQLSchema!
   """Create a new Activity Provider within an Inventive Activity Plan"""
-  createActivityProvider(createActivityProviderInput: CreateActivityProviderInput!, iapId: MongoIdScalar!): ActivityProviderGQLSchema!
+  createActivityProvider(createActivityProviderInput: CreateActivityProviderInput!): ActivityProviderGQLSchema!
   """Create a Goal within an Inventive Activity Plan"""
   createGoal(createGoalInput: CreateGoalInput!, iapId: MongoIdScalar!): GoalGQLSchema!
   """Create an Inventive Activity Plan"""
@@ -212,6 +212,10 @@ type Query {
   getActivityProvider(apId: MongoIdScalar!): ActivityProviderGQLSchema!
   """Find a list of Activities in an Activity Provider"""
   getActivityProviderActivities(apId: MongoIdScalar!): [ActivityGQLSchema!]!
+  """
+  Find a list of mandatory fields to scrape from the configuration interface
+  """
+  getActivityProviderRequiredFields(apId: MongoIdScalar!): [String!]!
   """Get a list of all Activity Providers"""
   getActivityProviders: [ActivityProviderGQLSchema!]!
   """
@@ -222,6 +226,8 @@ type Query {
   getConfigurationParameters(apId: MongoIdScalar!): [String!]!
   """Find an Inventive Activity Plan for the given Id"""
   getIAP(iapId: MongoIdScalar!): IAPGQLSchema!
+  """Find all available metrics for the given IAP id"""
+  getIAPAvailableMetrics(iapId: MongoIdScalar!): [MetricGQLSchema!]!
   """Get a list of all Inventive Activity Plans"""
   getIAPs: [IAPGQLSchema!]!
 }
