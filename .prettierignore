@@ -7,3 +7,4 @@ schema.graphql
 .github
 nginx
 .releaserc.json
+CHANGELOG.md

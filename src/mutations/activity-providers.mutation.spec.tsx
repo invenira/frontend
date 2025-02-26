@@ -55,7 +55,6 @@ describe('useCreateActivityProviderMutation', () => {
 
     // Act: Trigger the mutation.
     result.current.mutate({
-      iapId: 'iap1',
       createActivityProviderInput: sampleCreateActivityProviderInput,
     });
 
@@ -87,7 +86,6 @@ describe('useCreateActivityProviderMutation', () => {
 
     // Act: Trigger the mutation.
     result.current.mutate({
-      iapId: 'iap1',
       createActivityProviderInput: sampleCreateActivityProviderInput,
     });
 

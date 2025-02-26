@@ -7,7 +7,6 @@ import {
 import { ACTIVITY_PROVIDERS_QUERY } from '@/queries';
 
 export type CreateActivityProviderMutationProps = {
-  iapId: string;
   createActivityProviderInput: CreateActivityProviderInput;
 };
 
@@ -19,10 +18,7 @@ export const useCreateActivityProviderMutation = (
 
   return useMutation({
     mutationFn: async (props: CreateActivityProviderMutationProps) =>
-      graphQLService.createActivityProvider(
-        props.iapId,
-        props.createActivityProviderInput,
-      ),
+      graphQLService.createActivityProvider(props.createActivityProviderInput),
 
     onSuccess: (activity) => {
       if (onSuccess) {

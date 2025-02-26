@@ -47,7 +47,7 @@ export type ActivityProviderGqlSchema = {
   __typename?: 'ActivityProviderGQLSchema';
   /** The internal unique Activity Provider ID. */
   _id: Scalars['MongoIdScalar']['output'];
-  /** The list of Activities created for this Activity Provider. */
+  /** The list of activities provided by this Activity Provider */
   activities: Array<ActivityGqlSchema>;
   /** The timestamp when the Activity Provider was created. */
   createdAt: Scalars['Date']['output'];
@@ -80,6 +80,8 @@ export type ConfigInterfaceGqlSchema = {
 
 /** The request payload to create a new Activity. */
 export type CreateActivityInput = {
+  /** The Activity Provider id that provides this Activity */
+  activityProviderId: Scalars['MongoIdScalar']['input'];
   /** The Activity Description. */
   description: Scalars['String']['input'];
   /** The unique Activity Name. */
@@ -162,7 +164,7 @@ export type IapgqlSchema = {
   deployUrls: Scalars['Record']['output'];
   /** The IAP Description. */
   description: Scalars['String']['output'];
-  /** The list of Goals included in the IAP */
+  /** The list of Goal included in the IAP */
   goals: Array<GoalGqlSchema>;
   /**
    * Weather this IAP is deployed or not. Being deployed means that the system has engaged with all Activity Providers to
@@ -190,7 +192,7 @@ export type MetricGqlSchema = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Create a new Activity using the given Activity Provider within an Inventive Activity Plan */
+  /** Create a new Activity within an Inventive Activity Plan */
   createActivity: ActivityGqlSchema;
   /** Create a new Activity Provider within an Inventive Activity Plan */
   createActivityProvider: ActivityProviderGqlSchema;
@@ -212,14 +214,13 @@ export type Mutation = {
 
 
 export type MutationCreateActivityArgs = {
-  apId: Scalars['MongoIdScalar']['input'];
   createActivityInput: CreateActivityInput;
+  iapId: Scalars['MongoIdScalar']['input'];
 };
 
 
 export type MutationCreateActivityProviderArgs = {
   createActivityProviderInput: CreateActivityProviderInput;
-  iapId: Scalars['MongoIdScalar']['input'];
 };
 
 
@@ -268,6 +269,8 @@ export type Query = {
   getActivityProvider: ActivityProviderGqlSchema;
   /** Find a list of Activities in an Activity Provider */
   getActivityProviderActivities: Array<ActivityGqlSchema>;
+  /** Find a list of mandatory fields to scrape from the configuration interface */
+  getActivityProviderRequiredFields: Array<Scalars['String']['output']>;
   /** Get a list of all Activity Providers */
   getActivityProviders: Array<ActivityProviderGqlSchema>;
   /** Find the Activity Configuration Interface URL for the given Activity Provider Id */
@@ -276,6 +279,8 @@ export type Query = {
   getConfigurationParameters: Array<Scalars['String']['output']>;
   /** Find an Inventive Activity Plan for the given Id */
   getIAP: IapgqlSchema;
+  /** Find all available metrics for the given IAP id */
+  getIAPAvailableMetrics: Array<MetricGqlSchema>;
   /** Get a list of all Inventive Activity Plans */
   getIAPs: Array<IapgqlSchema>;
 };
@@ -296,6 +301,11 @@ export type QueryGetActivityProviderActivitiesArgs = {
 };
 
 
+export type QueryGetActivityProviderRequiredFieldsArgs = {
+  apId: Scalars['MongoIdScalar']['input'];
+};
+
+
 export type QueryGetConfigurationInterfaceUrlArgs = {
   apId: Scalars['MongoIdScalar']['input'];
 };
@@ -307,6 +317,11 @@ export type QueryGetConfigurationParametersArgs = {
 
 
 export type QueryGetIapArgs = {
+  iapId: Scalars['MongoIdScalar']['input'];
+};
+
+
+export type QueryGetIapAvailableMetricsArgs = {
   iapId: Scalars['MongoIdScalar']['input'];
 };
 
@@ -335,7 +350,6 @@ export type CreateIapMutationVariables = Exact<{
 export type CreateIapMutation = { __typename?: 'Mutation', createIap: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string } };
 
 export type CreateActivityProviderMutationVariables = Exact<{
-  iapId: Scalars['MongoIdScalar']['input'];
   createActivityProviderInput: CreateActivityProviderInput;
 }>;
 
@@ -343,7 +357,7 @@ export type CreateActivityProviderMutationVariables = Exact<{
 export type CreateActivityProviderMutation = { __typename?: 'Mutation', createActivityProvider: { __typename?: 'ActivityProviderGQLSchema', _id: any, createdAt: any, createdBy: string, description: string, name: string, updatedAt: any, updatedBy: string, url: string, activities: Array<{ __typename?: 'ActivityGQLSchema', updatedAt: any, parameters: any, name: string }> } };
 
 export type CreateActivityMutationVariables = Exact<{
-  apId: Scalars['MongoIdScalar']['input'];
+  iapId: Scalars['MongoIdScalar']['input'];
   createActivityInput: CreateActivityInput;
 }>;
 
@@ -357,6 +371,20 @@ export type CreateGoalMutationVariables = Exact<{
 
 
 export type CreateGoalMutation = { __typename?: 'Mutation', createGoal: { __typename?: 'GoalGQLSchema', _id: any, createdAt: any, createdBy: string, description: string, formula: string, name: string, targetValue: number, updatedAt: any, updatedBy: string } };
+
+export type GetConfigurationInterfaceUrlQueryVariables = Exact<{
+  apId: Scalars['MongoIdScalar']['input'];
+}>;
+
+
+export type GetConfigurationInterfaceUrlQuery = { __typename?: 'Query', getConfigurationInterfaceUrl: { __typename?: 'ConfigInterfaceGQLSchema', url: string } };
+
+export type GetActivityProviderRequiredFieldsQueryVariables = Exact<{
+  apId: Scalars['MongoIdScalar']['input'];
+}>;
+
+
+export type GetActivityProviderRequiredFieldsQuery = { __typename?: 'Query', getActivityProviderRequiredFields: Array<string> };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -444,9 +472,8 @@ export const CreateIapDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CreateIapMutation, CreateIapMutationVariables>;
 export const CreateActivityProviderDocument = new TypedDocumentString(`
-    mutation createActivityProvider($iapId: MongoIdScalar!, $createActivityProviderInput: CreateActivityProviderInput!) {
+    mutation createActivityProvider($createActivityProviderInput: CreateActivityProviderInput!) {
   createActivityProvider(
-    iapId: $iapId
     createActivityProviderInput: $createActivityProviderInput
   ) {
     _id
@@ -466,8 +493,8 @@ export const CreateActivityProviderDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CreateActivityProviderMutation, CreateActivityProviderMutationVariables>;
 export const CreateActivityDocument = new TypedDocumentString(`
-    mutation createActivity($apId: MongoIdScalar!, $createActivityInput: CreateActivityInput!) {
-  createActivity(apId: $apId, createActivityInput: $createActivityInput) {
+    mutation createActivity($iapId: MongoIdScalar!, $createActivityInput: CreateActivityInput!) {
+  createActivity(iapId: $iapId, createActivityInput: $createActivityInput) {
     _id
     createdAt
     createdBy
@@ -494,3 +521,15 @@ export const CreateGoalDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateGoalMutation, CreateGoalMutationVariables>;
+export const GetConfigurationInterfaceUrlDocument = new TypedDocumentString(`
+    query getConfigurationInterfaceUrl($apId: MongoIdScalar!) {
+  getConfigurationInterfaceUrl(apId: $apId) {
+    url
+  }
+}
+    `) as unknown as TypedDocumentString<GetConfigurationInterfaceUrlQuery, GetConfigurationInterfaceUrlQueryVariables>;
+export const GetActivityProviderRequiredFieldsDocument = new TypedDocumentString(`
+    query getActivityProviderRequiredFields($apId: MongoIdScalar!) {
+  getActivityProviderRequiredFields(apId: $apId)
+}
+    `) as unknown as TypedDocumentString<GetActivityProviderRequiredFieldsQuery, GetActivityProviderRequiredFieldsQueryVariables>;

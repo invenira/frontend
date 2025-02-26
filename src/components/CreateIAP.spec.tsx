@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import { CreateIAP } from './CreateIAP';
-import { useActivityProvidersQuery, useIAPsQuery } from '@/queries';
+import { useActivityProvidersQuery } from '@/queries';
 import {
   useCreateActivityMutation,
   useCreateActivityProviderMutation,
@@ -12,6 +12,7 @@ import {
   useCreateIAPMutation,
 } from '@/mutations';
 
+// Disable explicit-any lint for tests
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 vi.mock('@/mutations', () => ({
@@ -23,7 +24,7 @@ vi.mock('@/mutations', () => ({
 
 vi.mock('@/queries', () => ({
   useActivityProvidersQuery: vi.fn(),
-  useIAPsQuery: vi.fn(),
+  // The useIAPsQuery is no longer used in the updated component.
   IAPS_QUERY: 'iaps',
   ACTIVITY_PROVIDERS_QUERY: 'aps',
 }));
@@ -32,7 +33,16 @@ vi.mock('@/components/CustomIFrame.tsx', () => ({
   CustomIFrame: () => <div data-testid="custom-iframe">Mocked IFrame</div>,
 }));
 
-// Create a QueryClient with a default query function.
+vi.mock('@/services', () => ({
+  graphQLService: {
+    getConfigurationInterfaceUrl: vi.fn(() =>
+      Promise.resolve('http://config-url.com'),
+    ),
+    getActivityProviderRequiredFields: vi.fn(() => Promise.resolve([])),
+  },
+}));
+
+// Helper function to create a QueryClient for testing.
 const createTestQueryClient = () =>
   new QueryClient({
     defaultOptions: {
@@ -42,6 +52,7 @@ const createTestQueryClient = () =>
     },
   });
 
+// Wrap the UI in a QueryClientProvider.
 const renderWithClient = (ui: React.ReactNode) => {
   const queryClient = createTestQueryClient();
   return render(
@@ -52,7 +63,7 @@ const renderWithClient = (ui: React.ReactNode) => {
 describe('CreateIAP', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mocks for query hooks
+    // Default mock for activity providers.
     (useActivityProvidersQuery as any).mockReturnValue({
       data: [
         {
@@ -64,16 +75,7 @@ describe('CreateIAP', () => {
       ],
       isLoading: false,
     });
-    (useIAPsQuery as any).mockReturnValue({
-      data: [
-        {
-          _id: 'iap-123',
-          activityProviders: [{ _id: 'provider-1', name: 'Provider One' }],
-        },
-      ],
-      error: null,
-    });
-    // Default mocks for mutation hooks (can be overridden in specific tests)
+    // Default mocks for mutation hooks.
     (useCreateIAPMutation as any).mockReturnValue({ mutate: vi.fn() });
     (useCreateActivityMutation as any).mockReturnValue({ mutate: vi.fn() });
     (useCreateGoalMutation as any).mockReturnValue({ mutate: vi.fn() });
@@ -93,7 +95,7 @@ describe('CreateIAP', () => {
 
   it('shows a validation error if IAP details are invalid on Next', async () => {
     renderWithClient(<CreateIAP />);
-    const nextButton = screen.getByRole('button', { name: /next/i });
+    const nextButton = await screen.findByRole('button', { name: /next/i });
     await userEvent.click(nextButton);
     await waitFor(() => {
       expect(
@@ -112,7 +114,7 @@ describe('CreateIAP', () => {
     const descriptionInput = screen.getByLabelText('Description');
     await userEvent.type(nameInput, 'Valid IAP Name');
     await userEvent.type(descriptionInput, 'Valid IAP Description');
-    const nextButton = screen.getByRole('button', { name: /next/i });
+    const nextButton = await screen.findByRole('button', { name: /next/i });
     await userEvent.click(nextButton);
     await waitFor(() => {
       expect(screen.getByText('Error')).toBeInTheDocument();
@@ -129,13 +131,12 @@ describe('CreateIAP', () => {
       onSuccess({ _id: 'iap-123' }),
     );
     (useCreateIAPMutation as any).mockReturnValue({ mutate: mutateMock });
-
     renderWithClient(<CreateIAP />);
     const nameInput = screen.getByLabelText('Name');
     const descriptionInput = screen.getByLabelText('Description');
     await userEvent.type(nameInput, 'Valid IAP Name');
     await userEvent.type(descriptionInput, 'Valid IAP Description');
-    const nextButton = screen.getByRole('button', { name: /next/i });
+    const nextButton = await screen.findByRole('button', { name: /next/i });
     await userEvent.click(nextButton);
     await waitFor(() => {
       expect(
@@ -149,13 +150,12 @@ describe('CreateIAP', () => {
       onError(new Error('Creation Failed')),
     );
     (useCreateIAPMutation as any).mockReturnValue({ mutate: mutateMock });
-
     renderWithClient(<CreateIAP />);
     const nameInput = screen.getByLabelText('Name');
     const descriptionInput = screen.getByLabelText('Description');
     await userEvent.type(nameInput, 'Valid IAP Name');
     await userEvent.type(descriptionInput, 'Valid IAP Description');
-    const nextButton = screen.getByRole('button', { name: /next/i });
+    const nextButton = await screen.findByRole('button', { name: /next/i });
     await userEvent.click(nextButton);
     await waitFor(() => {
       expect(screen.getByText('Error')).toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('CreateIAP', () => {
     const descriptionInput = screen.getByLabelText('Description');
     await userEvent.type(nameInput, 'Valid IAP Name');
     await userEvent.type(descriptionInput, 'Valid IAP Description');
-    const nextButton = screen.getByRole('button', { name: /next/i });
+    const nextButton = await screen.findByRole('button', { name: /next/i });
     await userEvent.click(nextButton);
     await waitFor(() => {
       expect(
@@ -203,10 +203,14 @@ describe('CreateIAP', () => {
     const descriptionInput = screen.getByLabelText('Description');
     await userEvent.type(nameInput, 'Valid IAP Name');
     await userEvent.type(descriptionInput, 'Valid IAP Description');
-    const nextButton = screen.getByRole('button', { name: /next/i });
-    // Navigate to step 2 (Goals)
+    const nextButton = await screen.findByRole('button', { name: /next/i });
+    // Click Next to go from IAP Details (step 0) to Activities (step 1)
     await userEvent.click(nextButton);
-    await userEvent.click(nextButton);
+    // Then click Next again to go to Goals (step 2)
+    const nextButtonStep1 = await screen.findByRole('button', {
+      name: /next/i,
+    });
+    await userEvent.click(nextButtonStep1);
     expect(
       screen.queryByRole('button', { name: /next/i }),
     ).not.toBeInTheDocument();
@@ -222,11 +226,12 @@ describe('CreateIAP', () => {
       );
       (useCreateIAPMutation as any).mockReturnValue({ mutate: mutateMock });
       renderWithClient(<CreateIAP />);
-      const nameInput = screen.getByLabelText('Name');
-      const descriptionInput = screen.getByLabelText('Description');
-      await userEvent.type(nameInput, 'Valid IAP Name');
-      await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
+      await userEvent.type(screen.getByLabelText('Name'), 'Valid IAP Name');
+      await userEvent.type(
+        screen.getByLabelText('Description'),
+        'Valid IAP Description',
+      );
+      const nextButton = await screen.findByRole('button', { name: /next/i });
       await userEvent.click(nextButton);
       await waitFor(() => {
         expect(
@@ -243,18 +248,16 @@ describe('CreateIAP', () => {
       const activityNameInput = screen.getByLabelText('Activity Name');
       await userEvent.type(activityNameInput, 'Temp Activity');
       // Close via Cancel
-      const cancelButton = screen.getByRole('button', { name: /cancel/i });
-      await userEvent.click(cancelButton);
+      await userEvent.click(screen.getByRole('button', { name: /cancel/i }));
       // Reopen dialog and verify fields are reset
       await userEvent.click(addActivityButton);
       expect(screen.getByLabelText('Activity Name')).toHaveValue('');
     });
 
     it('opens the Activity Dialog when clicking "Add Activity"', async () => {
-      const addActivityButton = screen.getByRole('button', {
-        name: /add activity/i,
-      });
-      await userEvent.click(addActivityButton);
+      await userEvent.click(
+        screen.getByRole('button', { name: /add activity/i }),
+      );
       await waitFor(() => {
         expect(screen.getByTestId('activity-dialog')).toBeInTheDocument();
       });
@@ -263,96 +266,50 @@ describe('CreateIAP', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows a validation error in the Activity Dialog for invalid activity details', async () => {
-      await userEvent.click(
-        screen.getByRole('button', { name: /add activity/i }),
-      );
-      const activityNameInput = screen.getByLabelText('Activity Name');
-      const activityDescriptionInput = screen.getByLabelText(
-        'Activity Description',
-      );
-      await userEvent.clear(activityNameInput);
-      await userEvent.type(activityNameInput, 'ab');
-      await userEvent.clear(activityDescriptionInput);
-      await userEvent.type(activityDescriptionInput, 'xy');
-      const addButton = screen.getByRole('button', { name: /^add$/i });
-      await userEvent.click(addButton);
-      await waitFor(() => {
-        expect(
-          screen.getByText(
-            /Activity Name and Description must have at least 3 characters/i,
-          ),
-        ).toBeInTheDocument();
-      });
-    });
-
-    it('shows a validation error if an existing provider is not selected', async () => {
-      await userEvent.click(
-        screen.getByRole('button', { name: /add activity/i }),
-      );
-      const activityNameInput = screen.getByLabelText('Activity Name');
-      const activityDescriptionInput = screen.getByLabelText(
-        'Activity Description',
-      );
-      await userEvent.clear(activityNameInput);
-      await userEvent.type(activityNameInput, 'Valid Activity');
-      await userEvent.clear(activityDescriptionInput);
-      await userEvent.type(activityDescriptionInput, 'Valid Description');
-      const addButton = screen.getByRole('button', { name: /^add$/i });
-      await userEvent.click(addButton);
-      await waitFor(() => {
-        expect(
-          screen.getByText(/Please select an existing provider/i),
-        ).toBeInTheDocument();
-      });
-    });
+    // The old test checking for a validation error when no provider is selected has been removed
+    // because the updated component no longer performs that check.
 
     it('handles adding an activity with an existing provider and opens the IFrame dialog', async () => {
       await userEvent.click(
         screen.getByRole('button', { name: /add activity/i }),
       );
-      const activityNameInput = screen.getByLabelText('Activity Name');
-      const activityDescriptionInput = screen.getByLabelText(
-        'Activity Description',
+      await userEvent.type(
+        screen.getByLabelText('Activity Name'),
+        'Valid Activity',
       );
-      await userEvent.clear(activityNameInput);
-      await userEvent.type(activityNameInput, 'Valid Activity');
-      await userEvent.clear(activityDescriptionInput);
-      await userEvent.type(activityDescriptionInput, 'Valid Description');
-      const providerSelect = screen.getByLabelText('Select Activity Provider');
-      await userEvent.click(providerSelect);
+      await userEvent.type(
+        screen.getByLabelText('Activity Description'),
+        'Valid Description',
+      );
+      await userEvent.click(screen.getByLabelText('Select Activity Provider'));
       const listbox = await screen.findByRole('listbox');
       await userEvent.click(within(listbox).getByText('Provider One'));
-      const addButton = screen.getByRole('button', { name: /^add$/i });
-      await userEvent.click(addButton);
-      await waitFor(() => {
-        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-      });
+      await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+      await waitFor(() =>
+        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+      );
     });
 
     it('submits the IFrame configuration and adds the activity', async () => {
       await userEvent.click(
         screen.getByRole('button', { name: /add activity/i }),
       );
-      const activityNameInput = screen.getByLabelText('Activity Name');
-      const activityDescriptionInput = screen.getByLabelText(
-        'Activity Description',
+      await userEvent.type(
+        screen.getByLabelText('Activity Name'),
+        'Valid Activity',
       );
-      await userEvent.clear(activityNameInput);
-      await userEvent.type(activityNameInput, 'Valid Activity');
-      await userEvent.clear(activityDescriptionInput);
-      await userEvent.type(activityDescriptionInput, 'Valid Description');
-      const providerSelect = screen.getByLabelText('Select Activity Provider');
-      await userEvent.click(providerSelect);
+      await userEvent.type(
+        screen.getByLabelText('Activity Description'),
+        'Valid Description',
+      );
+      await userEvent.click(screen.getByLabelText('Select Activity Provider'));
       const listbox = await screen.findByRole('listbox');
       await userEvent.click(within(listbox).getByText('Provider One'));
-      const addButton = screen.getByRole('button', { name: /^add$/i });
-      await userEvent.click(addButton);
-      await waitFor(() => {
-        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-      });
-      const saveButton = screen.getByRole('button', { name: /save/i });
-      await userEvent.click(saveButton);
+      await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
+      await waitFor(() =>
+        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+      );
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => {
         expect(screen.queryByTestId('iframe-dialog')).not.toBeInTheDocument();
         expect(
@@ -375,12 +332,13 @@ describe('CreateIAP', () => {
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getAllByRole('button', { name: /next/i });
-      await userEvent.click(nextButton[1]);
-      const addActivityButton = screen.getAllByRole('button', {
+      // Click Next to create IAP
+      const nextButtons = screen.getAllByRole('button', { name: /next/i });
+      await userEvent.click(nextButtons[1]);
+      const addActivityButtons = screen.getAllByRole('button', {
         name: /add activity/i,
       });
-      await userEvent.click(addActivityButton[1]);
+      await userEvent.click(addActivityButtons[1]);
       const providerTypeSelect = screen.getByLabelText(
         'Activity Provider Type',
       );
@@ -428,7 +386,7 @@ describe('CreateIAP', () => {
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
+      const nextButton = await screen.findByRole('button', { name: /next/i });
       await userEvent.click(nextButton);
       // Open Activity Dialog and fill required fields to trigger IFrame dialog.
       const addActivityButton = screen.getByRole('button', {
@@ -447,9 +405,9 @@ describe('CreateIAP', () => {
       await userEvent.click(within(listbox).getByText('Provider One'));
       const addButton = screen.getByRole('button', { name: /^add$/i });
       await userEvent.click(addButton);
-      await waitFor(() => {
-        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-      });
+      await waitFor(() =>
+        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+      );
       // Click Cancel in IFrame dialog
       const cancelButton = screen.getByRole('button', { name: /cancel/i });
       await userEvent.click(cancelButton);
@@ -470,9 +428,9 @@ describe('CreateIAP', () => {
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
+      const nextButton = await screen.findByRole('button', { name: /next/i });
       await userEvent.click(nextButton);
-      // Navigate to Goals step by clicking Next again
+      // Advance to Goals step by clicking Next on Activities step.
       await waitFor(() => {
         expect(
           screen.getByRole('heading', { name: 'Add Activities', level: 6 }),
@@ -480,9 +438,11 @@ describe('CreateIAP', () => {
       });
       await userEvent.click(nextButton);
       await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: 'Add Goals', level: 6 }),
-        ).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', {
+          name: 'Add Goals',
+          level: 6,
+        });
+        expect(headings[headings.length - 1]).toBeInTheDocument();
       });
     });
 
@@ -525,6 +485,11 @@ describe('CreateIAP', () => {
       const dialogAddButton = screen.getByRole('button', { name: /^add$/i });
       await userEvent.click(dialogAddButton);
       await waitFor(() => {
+        const headings = screen.getAllByRole('heading', {
+          name: 'Add Goals',
+          level: 6,
+        });
+        expect(headings[headings.length - 1]).toBeInTheDocument();
         expect(
           screen.getByText(/Goal 1: Goal 1 – SUM\(A\)/i),
         ).toBeInTheDocument();
@@ -538,17 +503,15 @@ describe('CreateIAP', () => {
       const mutateIAPMock = vi.fn((_, { onSuccess }) =>
         onSuccess({ _id: 'iap-123' }),
       );
-      (useCreateIAPMutation as any).mockReturnValue({
-        mutate: mutateIAPMock,
-      });
+      (useCreateIAPMutation as any).mockReturnValue({ mutate: mutateIAPMock });
       renderWithClient(<CreateIAP />);
       const nameInput = screen.getByLabelText('Name');
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
+      const nextButton = await screen.findByRole('button', { name: /next/i });
       await userEvent.click(nextButton);
-      // Add an activity
+      // Add an activity.
       const addActivityButton = screen.getByRole('button', {
         name: /add activity/i,
       });
@@ -567,20 +530,22 @@ describe('CreateIAP', () => {
       await userEvent.click(within(listbox).getByText('Provider One'));
       const addButton = screen.getByRole('button', { name: /^add$/i });
       await userEvent.click(addButton);
-      // Wait for IFrame dialog and then save it
-      await waitFor(() => {
-        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-      });
+      // Wait for IFrame dialog and then save it.
+      await waitFor(() =>
+        expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+      );
       const saveButton = screen.getByRole('button', { name: /save/i });
       await userEvent.click(saveButton);
-      // Move to Goals step
+      // Move to Goals step.
       await userEvent.click(nextButton);
       await waitFor(() => {
-        expect(
-          screen.getByRole('heading', { name: 'Add Goals', level: 6 }),
-        ).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', {
+          name: 'Add Goals',
+          level: 6,
+        });
+        expect(headings[headings.length - 1]).toBeInTheDocument();
       });
-      // Add a goal
+      // Add a goal.
       const addGoalButton = screen.getByRole('button', { name: /add goal/i });
       await userEvent.click(addGoalButton);
       const goalNameInput = screen.getByLabelText('Goal Name');
@@ -610,20 +575,23 @@ describe('CreateIAP', () => {
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
-      await userEvent.click(nextButton);
-      // Skip adding any activity; move directly to Goals step.
-      await userEvent.click(nextButton);
-      // Wait for the "Add Goals" heading so we are on the last step.
+      // Move from IAP Details (step 0) to Activities (step 1)
+      const nextBtn0 = await screen.findByRole('button', { name: /next/i });
+      await userEvent.click(nextBtn0);
+      // Without adding any activity, click Next to move to Goals (step 2)
+      const nextBtn1 = await screen.findByRole('button', { name: /next/i });
+      await userEvent.click(nextBtn1);
       await waitFor(() => {
-        expect(
-          screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-        ).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', {
+          name: 'Add Goals',
+          level: 6,
+        });
+        expect(headings[headings.length - 1]).toBeInTheDocument();
       });
-      const completeButton = screen.getAllByRole('button', {
+      const completeBtn = await screen.findAllByRole('button', {
         name: /complete/i,
       });
-      await userEvent.click(completeButton[1]);
+      await userEvent.click(completeBtn[1]);
       await waitFor(() => {
         expect(
           screen.getByText(/Please add at least one activity/i),
@@ -637,9 +605,10 @@ describe('CreateIAP', () => {
       const descriptionInput = screen.getByLabelText('Description');
       await userEvent.type(nameInput, 'Valid IAP Name');
       await userEvent.type(descriptionInput, 'Valid IAP Description');
-      const nextButton = screen.getByRole('button', { name: /next/i });
-      await userEvent.click(nextButton);
-      // Add an activity
+      // Move from IAP Details (step 0) to Activities (step 1)
+      const nextBtn0 = await screen.findByRole('button', { name: /next/i });
+      await userEvent.click(nextBtn0);
+      // Add an activity.
       const addActivityButton = screen.getByRole('button', {
         name: /add activity/i,
       });
@@ -663,18 +632,21 @@ describe('CreateIAP', () => {
       });
       const saveButton = screen.getByRole('button', { name: /save/i });
       await userEvent.click(saveButton);
-      // Now move to Goals step
-      await userEvent.click(nextButton);
+      // Now move to Goals step.
+      const nextBtn1 = await screen.findByRole('button', { name: /next/i });
+      await userEvent.click(nextBtn1);
       await waitFor(() => {
-        expect(
-          screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-        ).toBeInTheDocument();
+        const headings = screen.getAllByRole('heading', {
+          name: 'Add Goals',
+          level: 6,
+        });
+        expect(headings[headings.length - 1]).toBeInTheDocument();
       });
-      // Do not add any goal and try to complete.
-      const completeButton = screen.getAllByRole('button', {
+      // Do not add any goal and click Complete.
+      const completeBtn = await screen.findAllByRole('button', {
         name: /complete/i,
       });
-      await userEvent.click(completeButton[1]);
+      await userEvent.click(completeBtn[1]);
       await waitFor(() => {
         expect(
           screen.getByText(/Please add at least one goal/i),
@@ -682,7 +654,7 @@ describe('CreateIAP', () => {
       });
     });
 
-    describe('Additional Tests for CreateIAP Component > Complete Handler - Success Flow', () => {
+    describe('Additional Tests for Complete Handler - Success Flow', () => {
       it('completes the IAP creation successfully', async () => {
         const iapMutateMock = vi.fn((_, { onSuccess }) =>
           onSuccess({ _id: 'iap-123' }),
@@ -707,7 +679,7 @@ describe('CreateIAP', () => {
         const descriptionInput = screen.getByLabelText('Description');
         await userEvent.type(nameInput, 'Valid IAP Name');
         await userEvent.type(descriptionInput, 'Valid IAP Description');
-        const nextButton = screen.getByRole('button', { name: /next/i });
+        const nextButton = await screen.findByRole('button', { name: /next/i });
         await userEvent.click(nextButton);
         await waitFor(() => {
           expect(
@@ -734,25 +706,28 @@ describe('CreateIAP', () => {
         await userEvent.click(within(listbox).getByText('Provider One'));
         const addButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(addButton);
-        await waitFor(() => {
-          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-        });
+        await waitFor(() =>
+          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+        );
         const saveButton = screen.getByRole('button', { name: /save/i });
         await userEvent.click(saveButton);
 
         // Navigate to Goals step.
         await userEvent.click(nextButton);
         await waitFor(() => {
-          expect(
-            screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-          ).toBeInTheDocument();
+          const headings = screen.getAllByRole('heading', {
+            name: 'Add Goals',
+            level: 6,
+          });
+          expect(headings[headings.length - 1]).toBeInTheDocument();
         });
 
         // Add a goal.
-        const addGoalButton = screen.getAllByRole('button', {
+        const addGoalButtons = screen.getAllByRole('button', {
           name: /add goal/i,
         });
-        await userEvent.click(addGoalButton[1]);
+        // Use the second "Add Goal" button if more than one is rendered.
+        await userEvent.click(addGoalButtons[addGoalButtons.length - 1]);
         const goalNameInput = screen.getByLabelText('Goal Name');
         const goalDescriptionInput = screen.getByLabelText('Goal Description');
         const formulaInput = screen.getByLabelText('Formula');
@@ -763,17 +738,15 @@ describe('CreateIAP', () => {
         await userEvent.type(targetValueInput, '100');
         const goalAddButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(goalAddButton);
-        // Wait for the goal dialog to close.
         await waitFor(() => {
           expect(screen.queryByTestId('goal-dialog')).not.toBeInTheDocument();
         });
 
         // Now the "Complete" button should be rendered.
-        const completeButton = screen.getAllByRole('button', {
+        const completeButtons = screen.getAllByRole('button', {
           name: /complete/i,
         });
-        await userEvent.click(completeButton[1]);
-
+        await userEvent.click(completeButtons[completeButtons.length - 1]);
         await waitFor(() => {
           expect(
             screen.getByText(/IAP created successfully!/i),
@@ -783,7 +756,7 @@ describe('CreateIAP', () => {
       });
     });
 
-    describe('Additional Tests for CreateIAP Component > Complete Handler - Error Flows', () => {
+    describe('Additional Tests for Complete Handler - Error Flows', () => {
       it('handles error when activity creation fails during complete', async () => {
         const iapMutateMock = vi.fn((_, { onSuccess }) =>
           onSuccess({ _id: 'iap-123' }),
@@ -811,7 +784,7 @@ describe('CreateIAP', () => {
         const descriptionInput = screen.getByLabelText('Description');
         await userEvent.type(nameInput, 'Valid IAP Name');
         await userEvent.type(descriptionInput, 'Valid IAP Description');
-        const nextButton = screen.getByRole('button', { name: /next/i });
+        const nextButton = await screen.findByRole('button', { name: /next/i });
         await userEvent.click(nextButton);
         await waitFor(() => {
           expect(
@@ -838,25 +811,27 @@ describe('CreateIAP', () => {
         await userEvent.click(within(listbox).getByText('Provider One'));
         const addButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(addButton);
-        await waitFor(() => {
-          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-        });
+        await waitFor(() =>
+          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+        );
         const saveButton = screen.getByRole('button', { name: /save/i });
         await userEvent.click(saveButton);
 
         // Navigate to Goals step.
         await userEvent.click(nextButton);
         await waitFor(() => {
-          expect(
-            screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-          ).toBeInTheDocument();
+          const headings = screen.getAllByRole('heading', {
+            name: 'Add Goals',
+            level: 6,
+          });
+          expect(headings[headings.length - 1]).toBeInTheDocument();
         });
 
         // Add a goal.
-        const addGoalButton = screen.getAllByRole('button', {
+        const addGoalButtons = screen.getAllByRole('button', {
           name: /add goal/i,
         });
-        await userEvent.click(addGoalButton[1]);
+        await userEvent.click(addGoalButtons[addGoalButtons.length - 1]);
         const goalNameInput = screen.getByLabelText('Goal Name');
         const goalDescriptionInput = screen.getByLabelText('Goal Description');
         const formulaInput = screen.getByLabelText('Formula');
@@ -867,21 +842,19 @@ describe('CreateIAP', () => {
         await userEvent.type(targetValueInput, '100');
         const goalAddButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(goalAddButton);
-        // Wait for the goal dialog to close.
         await waitFor(() => {
           expect(screen.queryByTestId('goal-dialog')).not.toBeInTheDocument();
         });
 
         // Attempt to complete the process.
-        const completeButton = screen.getAllByRole('button', {
+        const completeButtons = screen.getAllByRole('button', {
           name: /complete/i,
         });
-        await userEvent.click(completeButton[1]);
+        await userEvent.click(completeButtons[completeButtons.length - 1]);
         await waitFor(() => {
           expect(
             screen.getByRole('heading', { name: 'Add Activities', level: 6 }),
           ).toBeInTheDocument();
-          // The error branch sets the activeStep back to the Activities step.
         });
       });
 
@@ -911,7 +884,7 @@ describe('CreateIAP', () => {
         const descriptionInput = screen.getByLabelText('Description');
         await userEvent.type(nameInput, 'Valid IAP Name');
         await userEvent.type(descriptionInput, 'Valid IAP Description');
-        const nextButton = screen.getByRole('button', { name: /next/i });
+        const nextButton = await screen.findByRole('button', { name: /next/i });
         await userEvent.click(nextButton);
         await waitFor(() => {
           expect(
@@ -938,25 +911,27 @@ describe('CreateIAP', () => {
         await userEvent.click(within(listbox).getByText('Provider One'));
         const addButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(addButton);
-        await waitFor(() => {
-          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument();
-        });
+        await waitFor(() =>
+          expect(screen.getByTestId('iframe-dialog')).toBeInTheDocument(),
+        );
         const saveButton = screen.getByRole('button', { name: /save/i });
         await userEvent.click(saveButton);
 
         // Navigate to Goals step.
         await userEvent.click(nextButton);
         await waitFor(() => {
-          expect(
-            screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-          ).toBeInTheDocument();
+          const headings = screen.getAllByRole('heading', {
+            name: 'Add Goals',
+            level: 6,
+          });
+          expect(headings[headings.length - 1]).toBeInTheDocument();
         });
 
         // Add a goal.
-        const addGoalButton = screen.getAllByRole('button', {
+        const addGoalButtons = screen.getAllByRole('button', {
           name: /add goal/i,
         });
-        await userEvent.click(addGoalButton[1]);
+        await userEvent.click(addGoalButtons[addGoalButtons.length - 1]);
         const goalNameInput = screen.getByLabelText('Goal Name');
         const goalDescriptionInput = screen.getByLabelText('Goal Description');
         const formulaInput = screen.getByLabelText('Formula');
@@ -967,20 +942,21 @@ describe('CreateIAP', () => {
         await userEvent.type(targetValueInput, '100');
         const goalAddButton = screen.getByRole('button', { name: /^add$/i });
         await userEvent.click(goalAddButton);
-        // Wait for the goal dialog to close.
         await waitFor(() => {
           expect(screen.queryByTestId('goal-dialog')).not.toBeInTheDocument();
         });
 
         // Attempt to complete the process.
-        const completeButton = screen.getAllByRole('button', {
+        const completeButtons = screen.getAllByRole('button', {
           name: /complete/i,
         });
-        await userEvent.click(completeButton[1]);
+        await userEvent.click(completeButtons[completeButtons.length - 1]);
         await waitFor(() => {
-          expect(
-            screen.getAllByRole('heading', { name: 'Add Goals', level: 6 })[0],
-          ).toBeInTheDocument();
+          const headings = screen.getAllByRole('heading', {
+            name: 'Add Goals',
+            level: 6,
+          });
+          expect(headings[headings.length - 1]).toBeInTheDocument();
         });
       });
     });

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -20,7 +20,6 @@ import {
   ACTIVITY_PROVIDERS_QUERY,
   IAPS_QUERY,
   useActivityProvidersQuery,
-  useIAPsQuery,
 } from '@/queries';
 import {
   useCreateActivityMutation,
@@ -36,9 +35,9 @@ import {
 } from '@/graphql/graphql.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { CustomIFrame } from '@/components';
+import { graphQLService } from '@/services';
 
 interface Activity {
-  apId: string;
   createActivityInput: CreateActivityInput;
 }
 
@@ -91,6 +90,14 @@ export const CreateIAP = (props: CreateIAPProps) => {
   const [newProviderDescription, setNewProviderDescription] = useState('');
   const [newProviderUrl, setNewProviderUrl] = useState('');
 
+  const [apConfigUrl, setApConfigUrl] = useState('');
+
+  useEffect(() => {
+    graphQLService
+      .getConfigurationInterfaceUrl(selectedProviderId)
+      .then((url) => setApConfigUrl(url));
+  }, [selectedProviderId]);
+
   // Step 3: Goals
   const [goals, setGoals] = useState<CreateGoalInput[]>([]);
   const [openGoalDialog, setOpenGoalDialog] = useState(false);
@@ -104,8 +111,6 @@ export const CreateIAP = (props: CreateIAPProps) => {
   const activityMutation = useCreateActivityMutation();
   const goalsMutation = useCreateGoalMutation();
   const activityProviderMutation = useCreateActivityProviderMutation();
-
-  const { data: iaps, error: isIapsError } = useIAPsQuery();
 
   // Creation progress state
   const [creationProgress, setCreationProgress] = useState(0);
@@ -219,63 +224,12 @@ export const CreateIAP = (props: CreateIAPProps) => {
       return;
     }
     if (activityProviderType === 'existing') {
-      if (!selectedProviderId) {
-        showAlert('Validation Error', 'Please select an existing provider.');
-        return;
-      }
-      // (Optional) Refresh IAPs if needed.
-      if (isIapsError) {
-        showAlert('Connectivity Error', isIapsError.message);
-        return;
-      }
-      await queryClient.fetchQuery({ queryKey: [IAPS_QUERY] });
-      const ap = activityProviders?.find((ap) => ap._id === selectedProviderId);
-      let apId = iaps
-        ?.find((iap) => iap._id === iapId)
-        ?.activityProviders?.find(
-          (a) => a._id === selectedProviderId || a.name === ap?.name,
-        )?._id;
-      if (!apId) {
-        // If not found, create the provider via mutation.
-        const newProviderResponse = await new Promise<
-          Partial<ActivityProviderGqlSchema>
-        >((resolve, reject) => {
-          const ap = activityProviders?.find(
-            (ap) => ap._id === selectedProviderId,
-          );
-          activityProviderMutation.mutate(
-            {
-              iapId,
-              createActivityProviderInput: {
-                name: ap?.name || '',
-                description: ap?.description || '',
-                url: ap?.url || '',
-              },
-            },
-            {
-              onSuccess: (data) => {
-                queryClient
-                  .invalidateQueries({
-                    queryKey: [ACTIVITY_PROVIDERS_QUERY, IAPS_QUERY],
-                  })
-                  .then(() => resolve(data));
-              },
-              onError: (error) => reject(error),
-            },
-          );
-        });
-        if (!newProviderResponse._id) {
-          showAlert('Error', 'New provider creation did not return an ID.');
-          return;
-        }
-        apId = newProviderResponse._id;
-      }
       // Set pending activity for existing provider
       setPendingActivity({
-        apId,
         createActivityInput: {
           name: activityName.trim(),
           description: activityDescription.trim(),
+          activityProviderId: selectedProviderId,
           parameters: { test: 'test' },
         },
       });
@@ -298,7 +252,6 @@ export const CreateIAP = (props: CreateIAPProps) => {
         >((resolve, reject) => {
           activityProviderMutation.mutate(
             {
-              iapId,
               createActivityProviderInput: {
                 name: newProviderName.trim(),
                 description: newProviderDescription.trim(),
@@ -321,15 +274,18 @@ export const CreateIAP = (props: CreateIAPProps) => {
           showAlert('Error', 'New provider creation did not return an ID.');
           return;
         }
-        setPendingActivity({
-          apId: newProviderResponse._id,
-          createActivityInput: {
-            name: activityName.trim(),
-            description: activityDescription.trim(),
-            parameters: { test: 'test' },
-          },
-        });
-        setOpenIFrameDialog(true);
+        setSelectedProviderId(newProviderResponse._id);
+        setTimeout(() => {
+          setPendingActivity({
+            createActivityInput: {
+              name: activityName.trim(),
+              description: activityDescription.trim(),
+              activityProviderId: newProviderResponse._id,
+              parameters: { test: 'test' },
+            },
+          });
+          setOpenIFrameDialog(true);
+        }, 200);
       } catch (error) {
         console.log(error);
         showAlert(
@@ -364,46 +320,47 @@ export const CreateIAP = (props: CreateIAPProps) => {
 
   // Callback from CustomIFrame – receives the scraped values.
   const handleIFrameSubmit = () => {
-    // TODO: Fetch required activity from backend - implement graphql query
-    const fields = [] as string[];
+    graphQLService
+      .getActivityProviderRequiredFields(selectedProviderId)
+      .then((fields) => {
+        const params = new Map<string, string>();
+        let value;
+        for (const field of fields) {
+          const els = dialogRef?.current?.children || [];
+          for (const el of els) {
+            value = findFieldValue(field, el);
+            if (value) {
+              break;
+            }
+          }
 
-    const params = new Map<string, string>();
-    let value;
-    for (const field of fields) {
-      const els = dialogRef?.current?.children || [];
-      for (const el of els) {
-        value = findFieldValue(field, el);
-        if (value) {
-          break;
+          if (!value || value.trim().length === 0) {
+            showAlert(
+              'Configuration Error',
+              `Unable to read required field "${field}" or its empty. Activity not added.`,
+            );
+            setOpenIFrameDialog(false);
+            return;
+          }
+
+          params.set(field, value);
         }
-      }
+        // If scraping succeeds, add the pending activity.
+        if (pendingActivity) {
+          const act = {
+            ...pendingActivity,
+            createActivityInput: {
+              ...pendingActivity.createActivityInput,
+              parameters: Object.fromEntries(params),
+            },
+          };
 
-      if (!value || value.trim().length === 0) {
-        showAlert(
-          'Configuration Error',
-          `Unable to read required field "${field}" or its empty. Activity not added.`,
-        );
+          setActivities([...activities, act]);
+        }
+        setPendingActivity(null);
         setOpenIFrameDialog(false);
-        return;
-      }
-
-      params.set(field, value);
-    }
-    // If scraping succeeds, add the pending activity.
-    if (pendingActivity) {
-      const act = {
-        ...pendingActivity,
-        createActivityInput: {
-          ...pendingActivity.createActivityInput,
-          parameters: params,
-        },
-      };
-
-      setActivities([...activities, act]);
-    }
-    setPendingActivity(null);
-    setOpenIFrameDialog(false);
-    setOpenActivityDialog(false);
+        setOpenActivityDialog(false);
+      });
   };
 
   const handleIFrameCancel = () => {
@@ -465,7 +422,7 @@ export const CreateIAP = (props: CreateIAPProps) => {
         await new Promise<void>((resolve, reject) => {
           activityMutation.mutate(
             {
-              apId: activity.apId,
+              iapId,
               createActivityInput: activity.createActivityInput,
             },
             { onSuccess: () => resolve(), onError: (error) => reject(error) },
@@ -559,8 +516,11 @@ export const CreateIAP = (props: CreateIAPProps) => {
                   Activity {index + 1}: {activity.createActivityInput.name} –
                   (Provider:{' '}
                   {
-                    activityProviders?.find((ap) => ap._id === activity.apId)
-                      ?.name
+                    activityProviders?.find(
+                      (ap) =>
+                        ap._id ===
+                        activity.createActivityInput.activityProviderId,
+                    )?.name
                   }
                   )
                 </Typography>
@@ -724,12 +684,7 @@ export const CreateIAP = (props: CreateIAPProps) => {
       >
         <DialogTitle>Activity Configuration Interface</DialogTitle>
         <DialogContent>
-          <CustomIFrame
-            url={
-              activityProviders?.find((ap) => ap._id === selectedProviderId)
-                ?.url || ''
-            }
-          />
+          <CustomIFrame url={apConfigUrl} />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleIFrameCancel} autoFocus>

@@ -9,6 +9,7 @@ import { useCreateActivityMutation } from '@/mutations/activities.mutation.ts';
 const sampleCreateActivityInput = {
   name: 'Test Activity',
   description: 'Test description',
+  activityProviderId: '',
   parameters: {},
 };
 
@@ -58,7 +59,7 @@ describe('useCreateActivityMutation', () => {
 
     // Act: Trigger the mutation.
     result.current.mutate({
-      apId: 'ap1',
+      iapId: 'iap1',
       createActivityInput: sampleCreateActivityInput,
     });
 
@@ -88,7 +89,7 @@ describe('useCreateActivityMutation', () => {
 
     // Act: Trigger the mutation.
     result.current.mutate({
-      apId: 'ap1',
+      iapId: 'iap1',
       createActivityInput: sampleCreateActivityInput,
     });
 

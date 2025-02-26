@@ -56,10 +56,7 @@ describe('GraphQLService', () => {
       description: 'New Provider Desc',
       url: 'http://newprovider.com',
     };
-    const newProvider = await iapService.createActivityProvider(
-      'iap-123',
-      providerInput,
-    );
+    const newProvider = await iapService.createActivityProvider(providerInput);
     expect(newProvider).toBeDefined();
     expect(newProvider.name).toBe(providerInput.name);
     expect(newProvider._id).toBeDefined();
@@ -69,12 +66,10 @@ describe('GraphQLService', () => {
     const activityInput = {
       name: 'New Activity',
       description: 'Activity Desc',
+      activityProviderId: 'provider-1',
       parameters: { key: 'value' },
     };
-    const newActivity = await iapService.createActivity(
-      'provider-1',
-      activityInput,
-    );
+    const newActivity = await iapService.createActivity('iap-1', activityInput);
     expect(newActivity).toBeDefined();
     expect(newActivity.name).toBe(activityInput.name);
     expect(newActivity.parameters).toEqual(activityInput.parameters);
@@ -142,7 +137,7 @@ describe('GraphQLService', () => {
       ),
     );
     await expect(
-      iapService.createActivityProvider('iap-123', {
+      iapService.createActivityProvider({
         name: 'Provider',
         description: 'Desc',
         url: 'http://url.com',
@@ -159,9 +154,10 @@ describe('GraphQLService', () => {
       ),
     );
     await expect(
-      iapService.createActivity('provider-1', {
+      iapService.createActivity('iap-1', {
         name: 'Activity',
         description: 'Desc',
+        activityProviderId: 'provider-1',
         parameters: {},
       }),
     ).rejects.toThrow(/Failed to create activity/);
