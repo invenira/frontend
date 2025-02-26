@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/invenira/frontend/compare/v1.0.0...v1.1.0) (2025-02-26)
+
+
+### Bug Fixes
+
+* Update ci.yaml ([7cc2616](https://github.com/invenira/frontend/commit/7cc26166db86a751c119464a8f540107328a3a1c))
+
+
+### Features
+
+* update schemas version ([261eaf4](https://github.com/invenira/frontend/commit/261eaf4c55b38acf2320b88732778ecd3bf614c8))
+
 # 1.0.0 (2025-02-22)
 
 
