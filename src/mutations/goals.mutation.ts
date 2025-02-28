@@ -19,11 +19,11 @@ export const useCreateGoalMutation = (
       graphQLService.createGoal(props.iapId, props.createGoalInput),
 
     onSuccess: (iap) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [GOALS_QUERY] })
-          .then(() => onSuccess(iap));
-      }
+      queryClient.invalidateQueries({ queryKey: [GOALS_QUERY] }).then(() => {
+        if (onSuccess) {
+          onSuccess(iap);
+        }
+      });
     },
     onError: () => (onError ? onError() : null),
   });

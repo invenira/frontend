@@ -19,11 +19,13 @@ export const useCreateActivityMutation = (
       graphQLService.createActivity(props.iapId, props.createActivityInput),
 
     onSuccess: (activity) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [ACTIVITIES_QUERY] })
-          .then(() => onSuccess(activity));
-      }
+      queryClient
+        .invalidateQueries({ queryKey: [ACTIVITIES_QUERY] })
+        .then(() => {
+          if (onSuccess) {
+            onSuccess(activity);
+          }
+        });
     },
     onError: () => (onError ? onError() : null),
   });
