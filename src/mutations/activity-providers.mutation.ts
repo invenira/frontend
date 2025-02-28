@@ -21,11 +21,13 @@ export const useCreateActivityProviderMutation = (
       graphQLService.createActivityProvider(props.createActivityProviderInput),
 
     onSuccess: (activity) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [ACTIVITY_PROVIDERS_QUERY] })
-          .then(() => onSuccess(activity));
-      }
+      queryClient
+        .invalidateQueries({ queryKey: [ACTIVITY_PROVIDERS_QUERY] })
+        .then(() => {
+          if (onSuccess) {
+            onSuccess(activity);
+          }
+        });
     },
     onError: () => (onError ? onError() : null),
   });
