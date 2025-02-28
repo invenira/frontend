@@ -19,7 +19,6 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import HomeIcon from '@mui/icons-material/Home';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useRouter } from '@tanstack/react-router';
-import { userCustomRouter } from '@/utils';
 
 export interface LayoutProps {
   children: ReactNode;
@@ -29,8 +28,7 @@ export interface LayoutProps {
 
 export default function Layout(props: LayoutProps) {
   const [openDrawer, setOpenDrawer] = useState(false);
-  const router = userCustomRouter(useRouter());
-  const baseRouter = useRouter();
+  const router = useRouter();
   const drawerWidth = 240;
 
   const home = () => {
@@ -46,7 +44,7 @@ export default function Layout(props: LayoutProps) {
     setOpenDrawer((prevState) => !prevState);
   };
 
-  const logout = () => baseRouter.navigate({ to: '/logout' });
+  const logout = () => router.navigate({ to: '/logout' });
 
   const drawerContent = (
     <Box
