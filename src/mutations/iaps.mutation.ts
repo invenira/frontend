@@ -19,11 +19,11 @@ export const useCreateIAPMutation = (
       graphQLService.createIap(props.name, props.description),
 
     onSuccess: (iap) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [IAPS_QUERY] })
-          .then(() => onSuccess(iap));
-      }
+      queryClient.invalidateQueries({ queryKey: [IAPS_QUERY] }).then(() => {
+        if (onSuccess) {
+          onSuccess(iap);
+        }
+      });
     },
     onError: () => (onError ? onError() : null),
   });
