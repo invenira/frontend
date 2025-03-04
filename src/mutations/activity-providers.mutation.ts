@@ -12,7 +12,7 @@ export type CreateActivityProviderMutationProps = {
 
 export const useCreateActivityProviderMutation = (
   onSuccess?: (iap: Partial<ActivityProviderGqlSchema>) => void,
-  onError?: () => void,
+  onError?: (e: Error) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -29,6 +29,6 @@ export const useCreateActivityProviderMutation = (
           }
         });
     },
-    onError: () => (onError ? onError() : null),
+    onError: (e: Error) => (onError ? onError(e) : null),
   });
 };

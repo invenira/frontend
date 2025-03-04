@@ -10,7 +10,7 @@ export type CreateActivityMutationProps = {
 
 export const useCreateActivityMutation = (
   onSuccess?: (iap: Partial<ActivityGqlSchema>) => void,
-  onError?: () => void,
+  onError?: (e: Error) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -27,6 +27,6 @@ export const useCreateActivityMutation = (
           }
         });
     },
-    onError: () => (onError ? onError() : null),
+    onError: (e: Error) => (onError ? onError(e) : null),
   });
 };

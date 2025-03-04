@@ -15,12 +15,14 @@ import {
   DialogContentText,
   DialogTitle,
   Grid2,
+  TextField,
   Typography,
 } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
-import { useDeployIAPMutation } from '@/mutations';
+import { useCreateGoalMutation, useDeployIAPMutation } from '@/mutations';
 
 export const IAP = () => {
+  // Error Dialog
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [alertDialogTitle, setAlertDialogTitle] = useState('');
   const [alertDialogMessage, setAlertDialogMessage] = useState('');
@@ -30,6 +32,14 @@ export const IAP = () => {
     setAlertDialogMessage(e.message);
     setAlertDialogOpen(true);
   });
+
+  // Goal Dialog
+  const [openGoalDialog, setOpenGoalDialog] = useState(false);
+  const [goalName, setGoalName] = useState('');
+  const [goalDescription, setGoalDescription] = useState('');
+  const [goalFormula, setGoalFormula] = useState('');
+  const [goalTargetValue, setGoalTargetValue] = useState('');
+  const goalsMutation = useCreateGoalMutation();
 
   const search = useSearch({ from: '/iap' });
   const [iapId] = useState<string>(search?.id?.toString() || '');
@@ -60,7 +70,40 @@ export const IAP = () => {
 
   const handleAddActivity = () => {};
 
-  const handleAddGoal = () => {};
+  const handleAddGoal = () => {
+    new Promise<void>((res, rej) => {
+      goalsMutation.mutate(
+        {
+          iapId,
+          createGoalInput: {
+            name: goalName,
+            description: goalDescription,
+            formula: goalFormula,
+            targetValue: Number(goalTargetValue),
+          },
+        },
+        { onSuccess: () => res(), onError: (e) => rej(e) },
+      );
+    })
+      .then(() => setOpenGoalDialog(false))
+      .catch((e) => {
+        setAlertDialogTitle('Create Goal Error');
+        setAlertDialogMessage(e.message);
+        setAlertDialogOpen(true);
+      });
+  };
+
+  const handleOpenGoalDialog = () => {
+    setGoalName('');
+    setGoalDescription('');
+    setGoalFormula('');
+    setGoalTargetValue('');
+    setOpenGoalDialog(true);
+  };
+
+  const handleCloseGoalDialog = () => {
+    setOpenGoalDialog(false);
+  };
 
   const {
     name,
@@ -120,7 +163,7 @@ export const IAP = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={handleAddGoal}
+                    onClick={handleOpenGoalDialog}
                     sx={{ ml: 2 }}
                   >
                     Add Goal
@@ -216,6 +259,51 @@ export const IAP = () => {
         <DialogActions>
           <Button onClick={() => setAlertDialogOpen(false)} autoFocus>
             OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Goal Dialog */}
+      <Dialog
+        open={openGoalDialog}
+        onClose={handleCloseGoalDialog}
+        data-testid="goal-dialog"
+      >
+        <DialogTitle>Add Goal</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="Goal Name"
+            value={goalName}
+            onChange={(e) => setGoalName(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Goal Description"
+            value={goalDescription}
+            onChange={(e) => setGoalDescription(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Formula"
+            value={goalFormula}
+            onChange={(e) => setGoalFormula(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Target Value"
+            value={goalTargetValue}
+            onChange={(e) => setGoalTargetValue(e.target.value)}
+            fullWidth
+            margin="normal"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseGoalDialog}>Cancel</Button>
+          <Button onClick={handleAddGoal} variant="contained">
+            Add
           </Button>
         </DialogActions>
       </Dialog>

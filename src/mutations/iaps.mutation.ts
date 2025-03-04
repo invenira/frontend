@@ -10,7 +10,7 @@ export type CreateIAPMutationProps = {
 
 export const useCreateIAPMutation = (
   onSuccess?: (iap: Partial<IapgqlSchema>) => void,
-  onError?: () => void,
+  onError?: (e: Error) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -25,7 +25,7 @@ export const useCreateIAPMutation = (
         }
       });
     },
-    onError: () => (onError ? onError() : null),
+    onError: (e) => (onError ? onError(e) : null),
   });
 };
 
