@@ -335,7 +335,7 @@ export type GetIapQueryVariables = Exact<{
 }>;
 
 
-export type GetIapQuery = { __typename?: 'Query', getIAP: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string } };
+export type GetIapQuery = { __typename?: 'Query', getIAP: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string, activityProviders: Array<{ __typename?: 'ActivityProviderGQLSchema', _id: any, name: string, description: string, url: string, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string, activities: Array<{ __typename?: 'ActivityGQLSchema', _id: any, name: string, description: string, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string }> }>, goals: Array<{ __typename?: 'GoalGQLSchema', _id: any, name: string, description: string, formula: string, targetValue: number, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string }> } };
 
 export type GetActivityProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -348,6 +348,13 @@ export type CreateIapMutationVariables = Exact<{
 
 
 export type CreateIapMutation = { __typename?: 'Mutation', createIap: { __typename?: 'IAPGQLSchema', _id: any, name: string, description: string, isDeployed: boolean, createdAt: any, createdBy: string, updatedAt: any, updatedBy: string } };
+
+export type DeployIapMutationVariables = Exact<{
+  iapId: Scalars['MongoIdScalar']['input'];
+}>;
+
+
+export type DeployIapMutation = { __typename?: 'Mutation', deployIap?: any | null };
 
 export type CreateActivityProviderMutationVariables = Exact<{
   createActivityProviderInput: CreateActivityProviderInput;
@@ -435,7 +442,37 @@ export const GetIapDocument = new TypedDocumentString(`
     _id
     name
     description
+    activityProviders {
+      _id
+      name
+      description
+      url
+      activities {
+        _id
+        name
+        description
+        createdAt
+        createdBy
+        updatedAt
+        updatedBy
+      }
+      createdAt
+      createdBy
+      updatedAt
+      updatedBy
+    }
     isDeployed
+    goals {
+      _id
+      name
+      description
+      formula
+      targetValue
+      createdAt
+      createdBy
+      updatedAt
+      updatedBy
+    }
     createdAt
     createdBy
     updatedAt
@@ -471,6 +508,11 @@ export const CreateIapDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateIapMutation, CreateIapMutationVariables>;
+export const DeployIapDocument = new TypedDocumentString(`
+    mutation deployIap($iapId: MongoIdScalar!) {
+  deployIap(iapId: $iapId)
+}
+    `) as unknown as TypedDocumentString<DeployIapMutation, DeployIapMutationVariables>;
 export const CreateActivityProviderDocument = new TypedDocumentString(`
     mutation createActivityProvider($createActivityProviderInput: CreateActivityProviderInput!) {
   createActivityProvider(

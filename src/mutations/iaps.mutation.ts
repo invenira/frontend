@@ -28,3 +28,33 @@ export const useCreateIAPMutation = (
     onError: () => (onError ? onError() : null),
   });
 };
+
+export type DeployIAPMutationProps = {
+  id: string;
+};
+
+export const useDeployIAPMutation = (
+  onSuccess?: () => void,
+  onError?: (e: Error) => void,
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (props: DeployIAPMutationProps) => {
+      await graphQLService.deployIap(props.id);
+      return props.id;
+    },
+
+    onSuccess: (iapId) => {
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: [IAPS_QUERY] }),
+        queryClient.invalidateQueries({ queryKey: [`iap-${iapId}`] }),
+      ]).then(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      });
+    },
+    onError: (e: Error) => (onError ? onError(e) : null),
+  });
+};

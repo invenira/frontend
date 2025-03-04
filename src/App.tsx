@@ -17,7 +17,7 @@ import {
   LogoutRedirect,
   ProtectedView,
 } from '@/components';
-import { Home, IAPs } from '@/views';
+import { Home, IAP, IAPs } from '@/views';
 
 export const App = () => {
   const auth = useAuth();
@@ -93,6 +93,16 @@ export const App = () => {
     ),
   });
 
+  const iapRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/iap',
+    component: () => (
+      <ProtectedView>
+        <IAP />
+      </ProtectedView>
+    ),
+  });
+
   const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/login',
@@ -120,6 +130,7 @@ export const App = () => {
   const routeTree = rootRoute.addChildren([
     homeRoute,
     iapsRoute,
+    iapRoute,
     loginRoute,
     loginCallbackRoute,
     logoutRoute,
