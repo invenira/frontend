@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { graphQLService } from '@/services';
-import { CreateGoalInput, GoalGqlSchema } from '@/graphql/graphql.ts';
+import { CreateGoalInput } from '@/graphql/graphql.ts';
 import { GOALS_QUERY } from '@/queries';
 
 export type CreateGoalMutationProps = {
@@ -9,22 +9,27 @@ export type CreateGoalMutationProps = {
 };
 
 export const useCreateGoalMutation = (
-  onSuccess?: (iap: Partial<GoalGqlSchema>) => void,
-  onError?: () => void,
+  onSuccess?: () => void,
+  onError?: (e: Error) => void,
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (props: CreateGoalMutationProps) =>
-      graphQLService.createGoal(props.iapId, props.createGoalInput),
-
-    onSuccess: (iap) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [GOALS_QUERY] })
-          .then(() => onSuccess(iap));
-      }
+    mutationFn: async (props: CreateGoalMutationProps) => {
+      await graphQLService.createGoal(props.iapId, props.createGoalInput);
+      return props.iapId;
     },
-    onError: () => (onError ? onError() : null),
+
+    onSuccess: (iapId) => {
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: [GOALS_QUERY] }),
+        queryClient.invalidateQueries({ queryKey: [`iap-${iapId}`] }),
+      ]).then(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      });
+    },
+    onError: (e: Error) => (onError ? onError(e) : null),
   });
 };

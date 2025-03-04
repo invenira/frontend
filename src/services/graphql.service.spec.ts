@@ -180,4 +180,82 @@ describe('GraphQLService', () => {
       }),
     ).rejects.toThrow(/Failed to create goal/);
   });
+
+  it('deployIap deploys an IAP successfully', async () => {
+    server.use(
+      graphql.link(baseUrl).mutation('deployIap', () =>
+        HttpResponse.json({
+          data: { deployIap: true },
+        }),
+      ),
+    );
+    await expect(iapService.deployIap('123')).resolves.toBeUndefined();
+  });
+
+  it('deployIap throws an error when deployment fails', async () => {
+    server.use(
+      graphql.link(baseUrl).mutation('deployIap', () =>
+        HttpResponse.json({
+          errors: [{ message: 'Deployment failed' }],
+        }),
+      ),
+    );
+    await expect(iapService.deployIap('123')).rejects.toThrow(
+      /Deployment failed/,
+    );
+  });
+
+  it('getConfigurationInterfaceUrl returns the correct url', async () => {
+    server.use(
+      graphql.link(baseUrl).query('getConfigurationInterfaceUrl', () =>
+        HttpResponse.json({
+          data: {
+            getConfigurationInterfaceUrl: { url: 'http://config.test.com' },
+          },
+        }),
+      ),
+    );
+    const url = await iapService.getConfigurationInterfaceUrl('ap-123');
+    expect(url).toBe('http://config.test.com');
+  });
+
+  it('getConfigurationInterfaceUrl throws an error when fetching fails', async () => {
+    server.use(
+      graphql.link(baseUrl).query('getConfigurationInterfaceUrl', () =>
+        HttpResponse.json({
+          errors: [{ message: 'Failed to get config url' }],
+        }),
+      ),
+    );
+    await expect(
+      iapService.getConfigurationInterfaceUrl('ap-123'),
+    ).rejects.toThrow(/Failed to get config url/);
+  });
+
+  it('getActivityProviderRequiredFields returns required fields', async () => {
+    server.use(
+      graphql.link(baseUrl).query('getActivityProviderRequiredFields', () =>
+        HttpResponse.json({
+          data: {
+            getActivityProviderRequiredFields: ['field1', 'field2'],
+          },
+        }),
+      ),
+    );
+    const fields = await iapService.getActivityProviderRequiredFields('ap-123');
+    expect(fields).toEqual(['field1', 'field2']);
+  });
+
+  it('getActivityProviderRequiredFields throws an error when fetching fails', async () => {
+    server.use(
+      graphql.link(baseUrl).query('getActivityProviderRequiredFields', () =>
+        HttpResponse.json({
+          errors: [{ message: 'Failed to get required fields' }],
+        }),
+      ),
+    );
+    await expect(
+      iapService.getActivityProviderRequiredFields('ap-123'),
+    ).rejects.toThrow(/Failed to get required fields/);
+  });
 });

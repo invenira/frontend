@@ -27,7 +27,6 @@ const getIAPsQuery = graphql(`
         }
       }
       isDeployed
-      #deployUrls
       goals {
         _id
         name
@@ -46,7 +45,37 @@ const getIAPQuery = graphql(`
       _id
       name
       description
+      activityProviders {
+        _id
+        name
+        description
+        url
+        activities {
+          _id
+          name
+          description
+          createdAt
+          createdBy
+          updatedAt
+          updatedBy
+        }
+        createdAt
+        createdBy
+        updatedAt
+        updatedBy
+      }
       isDeployed
+      goals {
+        _id
+        name
+        description
+        formula
+        targetValue
+        createdAt
+        createdBy
+        updatedAt
+        updatedBy
+      }
       createdAt
       createdBy
       updatedAt
@@ -82,6 +111,12 @@ const createIAPMutation = graphql(`
       updatedAt
       updatedBy
     }
+  }
+`);
+
+const deployIAPMutation = graphql(`
+  mutation deployIap($iapId: MongoIdScalar!) {
+    deployIap(iapId: $iapId)
   }
 `);
 
@@ -195,6 +230,12 @@ export class GraphQLService {
       },
     ).then((d) => {
       return d.createIap;
+    });
+  }
+
+  async deployIap(iapId: string): Promise<void> {
+    await graphQLRequest(deployIAPMutation, {
+      iapId,
     });
   }
 

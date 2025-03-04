@@ -10,7 +10,7 @@ export type CreateActivityMutationProps = {
 
 export const useCreateActivityMutation = (
   onSuccess?: (iap: Partial<ActivityGqlSchema>) => void,
-  onError?: () => void,
+  onError?: (e: Error) => void,
 ) => {
   const queryClient = useQueryClient();
 
@@ -19,12 +19,14 @@ export const useCreateActivityMutation = (
       graphQLService.createActivity(props.iapId, props.createActivityInput),
 
     onSuccess: (activity) => {
-      if (onSuccess) {
-        queryClient
-          .invalidateQueries({ queryKey: [ACTIVITIES_QUERY] })
-          .then(() => onSuccess(activity));
-      }
+      queryClient
+        .invalidateQueries({ queryKey: [ACTIVITIES_QUERY] })
+        .then(() => {
+          if (onSuccess) {
+            onSuccess(activity);
+          }
+        });
     },
-    onError: () => (onError ? onError() : null),
+    onError: (e: Error) => (onError ? onError(e) : null),
   });
 };
