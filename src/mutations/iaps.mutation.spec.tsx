@@ -4,7 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IAPS_QUERY } from '@/queries';
 import { graphQLService } from '@/services';
-import { useCreateIAPMutation } from '@/mutations/iaps.mutation.ts';
+import {
+  useCreateIAPMutation,
+  useDeployIAPMutation,
+} from '@/mutations/iaps.mutation.ts';
 
 describe('useCreateIAPMutation', () => {
   let queryClient: QueryClient;
@@ -77,5 +80,72 @@ describe('useCreateIAPMutation', () => {
       expect(onError).toHaveBeenCalled();
     });
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe('useDeployIAPMutation', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  it('should call onSuccess and invalidateQueries on a successful deployment', async () => {
+    vi.spyOn(graphQLService, 'deployIap').mockResolvedValueOnce(undefined);
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(
+      () => useDeployIAPMutation(onSuccess, onError),
+      { wrapper },
+    );
+
+    result.current.mutate({ id: '123' });
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalled();
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [IAPS_QUERY] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [`iap-123`] });
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('should call onError on deployment failure', async () => {
+    const fakeError = new Error('Deployment error');
+    vi.spyOn(graphQLService, 'deployIap').mockRejectedValueOnce(fakeError);
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+
+    const { result } = renderHook(
+      () => useDeployIAPMutation(onSuccess, onError),
+      { wrapper },
+    );
+
+    result.current.mutate({ id: '123' });
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledWith(fakeError);
+    });
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('mutateAsync should resolve with the given id on success', async () => {
+    vi.spyOn(graphQLService, 'deployIap').mockResolvedValueOnce(undefined);
+    const { result } = renderHook(() => useDeployIAPMutation(), { wrapper });
+
+    const returnedId = await result.current.mutateAsync({ id: '456' });
+    expect(returnedId).toBe('456');
   });
 });

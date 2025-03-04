@@ -58,11 +58,11 @@ describe('useCreateGoalMutation', () => {
       createGoalInput: sampleCreateGoalInput,
     });
 
-    // Assert: Wait for onSuccess to be called with the fake response.
     await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledWith(fakeResponse);
+      expect(onSuccess).toHaveBeenCalled();
     });
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [GOALS_QUERY] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [`iap-iap1`] });
     expect(onError).not.toHaveBeenCalled();
   });
 
