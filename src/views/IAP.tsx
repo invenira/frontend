@@ -9,12 +9,28 @@ import {
   CardHeader,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Grid2,
   Typography,
 } from '@mui/material';
 import LinearProgress from '@mui/material/LinearProgress';
+import { useDeployIAPMutation } from '@/mutations';
 
 export const IAP = () => {
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertDialogTitle, setAlertDialogTitle] = useState('');
+  const [alertDialogMessage, setAlertDialogMessage] = useState('');
+
+  const deployIAPMutation = useDeployIAPMutation(undefined, (e) => {
+    setAlertDialogTitle('Deploy Error');
+    setAlertDialogMessage(e.message);
+    setAlertDialogOpen(true);
+  });
+
   const search = useSearch({ from: '/iap' });
   const [iapId] = useState<string>(search?.id?.toString() || '');
 
@@ -40,7 +56,7 @@ export const IAP = () => {
     throw new Error('IAP not found');
   }
 
-  const handleDeploy = () => {};
+  const handleDeploy = () => deployIAPMutation.mutate({ id: iap?._id });
 
   const handleAddActivity = () => {};
 
@@ -191,6 +207,18 @@ export const IAP = () => {
           </Box>
         )}
       </Container>
+      {/* Alert Dialog */}
+      <Dialog open={alertDialogOpen} onClose={() => setAlertDialogOpen(false)}>
+        <DialogTitle>{alertDialogTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{alertDialogMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAlertDialogOpen(false)} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
