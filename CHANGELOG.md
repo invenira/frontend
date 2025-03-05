@@ -1,3 +1,22 @@
+# [1.2.0](https://github.com/invenira/frontend/compare/v1.1.0...v1.2.0) (2025-03-05)
+
+
+### Bug Fixes
+
+* deps after merge ([f0a7613](https://github.com/invenira/frontend/commit/f0a7613885203eb13ad8cb2368f76dd14a7c1ccd))
+* incorrectly invalidated queries ([397b5e1](https://github.com/invenira/frontend/commit/397b5e1b1c10a98f9be2a9df8a1e28b4a0126a04))
+* incorrectly invalidated query ([3f74ca2](https://github.com/invenira/frontend/commit/3f74ca276da6c921235485af30fcc196ea8bdb52))
+* navigation ([d4d82b6](https://github.com/invenira/frontend/commit/d4d82b6d7b474fae3269a2b1d51b145559d65546))
+* newly created AP not showing ([3a1d3fa](https://github.com/invenira/frontend/commit/3a1d3faef95c784b3f86e3127dcc38369c39cbbd))
+
+
+### Features
+
+* add Activity from View IAP ([00ab17b](https://github.com/invenira/frontend/commit/00ab17b34057882bcae0e554c9cf65f09f4ef044))
+* add Goal from View IAP ([e0802bf](https://github.com/invenira/frontend/commit/e0802bf8041ad9ef8cfc77b861b1a449479a154d))
+* deploy IAP from View IAP ([62229b0](https://github.com/invenira/frontend/commit/62229b04bf613b784a5ed55d53266259bfe35dc0))
+* View IAP ([fb8c45a](https://github.com/invenira/frontend/commit/fb8c45a295effea4542f0691941279f42b26b38d))
+
 # [1.1.0](https://github.com/invenira/frontend/compare/v1.0.0...v1.1.0) (2025-02-26)
 
 
