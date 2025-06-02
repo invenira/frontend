@@ -23,7 +23,7 @@
     "@emotion/styled": "^11.14.0",
     "@fontsource/roboto": "^5.1.1",
     "@mui/icons-material": "^6.4.6",
-    "@mui/material": "^6.4.6",
+    "@mui/material": "^7.1.1",
     "@tanstack/react-query": "^5.66.0",
     "@tanstack/react-router": "^1.112.0",
     "axios": "^1.7.9",
